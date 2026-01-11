@@ -1,6 +1,6 @@
 # ModDistrib
 <br>The following options are available for Windows 10.11 distributions:
-<br>1.Mount an ISO image or folder to extract (without selecting) or replace the kernel
+<br>1.Mount an ISO image or folder to extract (without selecting) or replace the files(kernel32.dll,kernel32.reg)
 <br>2.Export/import the install WIM file index
 <br>3.Export/import the boot WIM file index
 <br>4.Delete the install WIM file index
