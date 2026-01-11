@@ -12,3 +12,5 @@
 <br>10.Import a boot WIM file into a distribution
 <br>11.Detailed information about the imported install/boot WIM file index
 <br>12.Delete the distribution's boot WIM file index
+# Download
+[ModDistrib.zip](https://disk.yandex.ru/d/EXZZVhuYqfwpiA)
