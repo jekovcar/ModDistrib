@@ -27,7 +27,7 @@ if '%errorlevel%' NEQ '0' (
 :: CODE ADMIN:
 @echo off
 powershell Write-Host "ExtractDistrib" -Foregroundcolor White -BackgroundColor Blue -NoNewline 
-powershell Write-Host "-извлечение'('без импорта')'/подмена kernel32.dll',' WimVers.reg из ISO или распак.дистрибутива Win10','11" -Foregroundcolor yellow -BackgroundColor darkBlue
+powershell Write-Host "-╨Б┬з╤Ю┬л╥Р╨╖╥Р┬н╨Б╥Р'('╨О╥Р┬з ╨Б┬м╨З┬о╨░╨▓┬а')'/╨З┬о┬д┬м╥Р┬н┬а kernel32.dll',' WimVers.reg ╨Б┬з ISO ╨Б┬л╨Б ╨░┬а╨▒╨З┬а╨Д.┬д╨Б╨▒╨▓╨░╨Б╨О╨│╨▓╨Б╤Ю┬а Win10','11" -Foregroundcolor yellow -BackgroundColor darkBlue
 
 Powershell Get-WindowsImage -Mounted
 powershell Write-Host "IF NOT select ISO', 'you can Enter path of unpacked distrib" -ForegroundColor yellow; Start-Sleep -Seconds 1
@@ -131,9 +131,9 @@ dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
 echo.--------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
 @echo Mount Distr(M), Exp/Imp/Boot Distr(E), Remove index Distr(R), Export ESD to WIM(S)
-@echo Convert Wim to ESD(C), Details info Distr(I), Unmount(U), Back to Start(B)?
+@echo Convert Wim to ESD(C), Details info Distr(I), Unmount(U), Make Iso(N),To Start(B)?
 SET choice=
-SET /p choice=Pls, enter M/E/R/S/C/I/U/B: 
+SET /p choice=Pls, enter M/E/R/S/C/I/U/N/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
 IF /i '%choice%'=='M' goto ext
 IF /i '%choice%'=='E' goto por
@@ -142,8 +142,22 @@ IF /i '%choice%'=='S' goto esd
 IF /i '%choice%'=='C' goto con
 IF /i '%choice%'=='I' goto det
 IF /i '%choice%'=='U' goto unm
+IF /i '%choice%'=='N' goto iso
 IF /i '%choice%'=='B' goto start
 goto sel
+
+:iso
+echo.--------------------Make Iso Distr------------------------------
+if not exist "%~dp0New-ISOFile.ps1" powershell write-host -fore darkyellow To make Boot Iso, download 'New-ISOFile.ps1' : https://github.com/TheDotSource/New-ISOFile & pause & goto sel
+set lab=
+set /p "lab=Enter Iso Label: "
+set is=
+if exist "%out%%ParentFolderName%.iso" set is=New
+echo %ParentFolderName%%is%.iso '%lab%' is building...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& { . '%~dp0New-ISOFile.ps1'; New-ISOFile '%Fullpath%' '%out%%ParentFolderName%%is%.iso' -BootFile '%Fullpath%\efi\microsoft\boot\efisys.bin' -Title '%lab%' -Force }"
+powershell write-host -fore yellow Succefully maked %out%%ParentFolderName%%is%.iso & pause
+goto sel
+
 :det
 echo.--------------------Wim Details Info------------------------------
 set ind=
@@ -231,7 +245,6 @@ powershell write-host -fore yellow Choosed export index: %ind%
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim" /Index:%ind%
 for /f "delims=" %%i in ('powershell -command "(Get-WindowsImage -ImagePath '%Fullpath%\sources\install.wim' -Index %ind%).ImageName"') do set nameExp=%%i
 set destExp=
-set varname=value "
 set /p "nameExp=Enter Name for exported image(empty will '%nameExp%'): "
 If not "%nameExp%"=="" set destExp=/DestinationName:"%nameExp%"
 powershell write-host -fore yellow Export file will: install_%nameExp%_%ind%.wim
