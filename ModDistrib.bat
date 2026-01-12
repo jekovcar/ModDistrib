@@ -83,6 +83,17 @@ if exist "%Fullpath%\sources\install.wim" goto outd
 if not exist "%Fullpath%\sources\install.esd" powershell write-host -fore yellow Dir %Fullpath%\sources not contain install.esd & goto sel
 echo.--------------------ESD Info------------------------------
 if exist "%Fullpath%\sources\install.esd" dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.esd" & echo 'install.esd' will convert to 'install.wim'
+
+echo.
+for %%I in ("%Fullpath%\.") do set ParentFolderName=%%~nxI
+for %%i in ("%Fullpath%.") do set "out=%%~dpi"
+:esdc
+SET choice=
+SET /p "choice=Enter(cont.)/M(Menu): "
+IF /i '%choice%'=='M' goto sel
+IF /i '%choice%'=='' goto esw
+goto esdc
+
 :esw
 echo ----------Export ESD index to WIM image-------------
 echo Enter indexes separated by spaces,like(5, 1, 2) : 
