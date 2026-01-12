@@ -28,6 +28,7 @@ if '%errorlevel%' NEQ '0' (
 @echo off
 powershell Write-Host "ExtractDistrib" -Foregroundcolor White -BackgroundColor Blue -NoNewline 
 powershell Write-Host "-extract'('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO or unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
+powershell Write-Host "-Ё§ў«ҐзҐ­ЁҐ'('ЎҐ§ Ё¬Ї®ав ')'/Ї®¤¬Ґ­  kernel32.dll',' WimVers.reg ў Win10/11 ISO Ё«Ё а бЇ Є®ўЄҐ" -Foregroundcolor yellow -BackgroundColor darkBlue
 
 Powershell Get-WindowsImage -Mounted
 powershell Write-Host "IF NOT select ISO', 'you can Enter path of unpacked distrib" -ForegroundColor yellow; Start-Sleep -Seconds 1
@@ -155,7 +156,7 @@ set lab=
 set /p "lab=Enter Iso Label: "
 set is=
 if exist "%out%%ParentFolderName%.iso" set is=New
-echo %ParentFolderName%%is%.iso '%lab%' is building...
+echo %ParentFolderName%%is%.iso %lab% is building...
 powershell -NoProfile -ExecutionPolicy Bypass -Command "& { . '%~dp0New-ISOFile.ps1'; New-ISOFile '%Fullpath%' '%out%%ParentFolderName%%is%.iso' -BootFile '%Fullpath%\efi\microsoft\boot\efisys.bin' -Title '%lab%' -Force }"
 powershell write-host -fore yellow Succefully maked %out%%ParentFolderName%%is%.iso & pause
 goto sel
