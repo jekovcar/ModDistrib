@@ -131,7 +131,7 @@ dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
 echo.--------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
 @echo Mount Distr(M), Exp/Imp/Boot Distr(E), Remove index Distr(R), Export ESD to WIM(S)
-@echo Convert Wim to ESD(C), Details info Distr(I), Unmount(U), Make Iso(N),To Start(B)?
+@echo Convert Wim to ESD(C),Details info Distr(I),Unmount(U),Make Boot Iso(N),To Start(B)?
 SET choice=
 SET /p choice=Pls, enter M/E/R/S/C/I/U/N/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
@@ -148,7 +148,9 @@ goto sel
 
 :iso
 echo.--------------------Make Iso Distr------------------------------
-if not exist "%~dp0New-ISOFile.ps1" powershell write-host -fore darkyellow To make Boot Iso, download 'New-ISOFile.ps1' : https://github.com/TheDotSource/New-ISOFile & pause & goto sel
+if not exist "%~dp0New-ISOFile.ps1" powershell write-host -fore darkyellow To make Boot Iso, download '''New-ISOFile.ps1''': https://github.com/TheDotSource/New-ISOFile & pause & goto sel
+if not exist "%Fullpath%\efi\microsoft\boot\efisys.bin" powershell write-host -fore darkyellow Not exist Boot file '''%ParentFolderName%\efi\microsoft\boot\efisys.bin''' & pause & goto sel
+
 set lab=
 set /p "lab=Enter Iso Label: "
 set is=
