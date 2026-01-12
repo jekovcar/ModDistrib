@@ -27,7 +27,7 @@ if '%errorlevel%' NEQ '0' (
 :: CODE ADMIN:
 @echo off
 powershell Write-Host "ExtractDistrib" -Foregroundcolor White -BackgroundColor Blue -NoNewline 
-powershell Write-Host "-Ё§ў«ҐзҐ­ЁҐ'('ЎҐ§ Ё¬Ї®ав ')'/Ї®¤¬Ґ­  kernel32.dll',' WimVers.reg Ё§ ISO Ё«Ё а бЇ Є.¤ЁбваЁЎгвЁў  Win10','11" -Foregroundcolor yellow -BackgroundColor darkBlue
+powershell Write-Host "-extract'('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO or unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
 
 Powershell Get-WindowsImage -Mounted
 powershell Write-Host "IF NOT select ISO', 'you can Enter path of unpacked distrib" -ForegroundColor yellow; Start-Sleep -Seconds 1
