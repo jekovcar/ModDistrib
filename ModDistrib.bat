@@ -163,14 +163,23 @@ powershell -command "Start-BitsTransfer -Source 'https://github.com/TheDotSource
 powershell -command "Expand-Archive -Path '%~dp0main.zip' -Force"
 move "%~dp0main\New-ISOFile-main\New-ISOFile.ps1" "%~dp0" & RMDIR /S /Q "%~dp0main" & DEL "%~dp0main.zip" /S /Q
  )
-if not exist "%Fullpath%\efi\microsoft\boot\efisys.bin" powershell write-host -fore darkyellow Not exist Boot file '''%isoName%\efi\microsoft\boot\efisys.bin''' & pause & goto sel
-
+set boot=
+if exist "%Fullpath%\efi\microsoft\boot\efisys.bin" set "boot=%Fullpath%\efi\microsoft\boot\efisys.bin" & goto bld
+if not exist "%Fullpath%\efi\microsoft\boot\efisys.bin" powershell write-host -fore darkyellow Not exist Boot file '''%isoName%\efi\microsoft\boot\efisys.bin''' Pls, select & pause
+for /f "delims=" %%b in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'efisys bin (*.bin)|*.bin|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
+') do set boot=%%b
+IF NOT DEFINED boot (
+    ECHO NOT Choiced Boot file, Iso will be not bootable
+) ELSE (
+powershell write-host -fore yellow Choosed Boot file: %boot%
+)
+:bld
 set lab=
 set /p "lab=Enter Iso Label: "
 set is=
 if exist "%out%%isoName%.iso" set is=New
 echo %isoName%%is%.iso %lab% is building...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& { . '%~dp0New-ISOFile.ps1'; New-ISOFile '%Fullpath%' '%out%%isoName%%is%.iso' -BootFile '%Fullpath%\efi\microsoft\boot\efisys.bin' -Title '%lab%' -Force }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& { . '%~dp0New-ISOFile.ps1'; New-ISOFile '%Fullpath%' '%out%%isoName%%is%.iso' -BootFile '%boot%' -Title '%lab%' -Force }"
 powershell write-host -fore yellow Succefully maked %out%%isoName%%is%.iso & pause
 goto sel
 
