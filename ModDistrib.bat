@@ -157,7 +157,12 @@ goto sel
 
 :iso
 echo.--------------------Make Iso Distr------------------------------
-if not exist "%~dp0New-ISOFile.ps1" powershell write-host -fore darkyellow To make Boot Iso, download '''New-ISOFile.ps1''': https://github.com/TheDotSource/New-ISOFile & pause & goto sel
+if not exist "%~dp0New-ISOFile.ps1" (
+powershell write-host -fore darkyellow To make Boot Iso,'''New-ISOFile.ps1''' is download...
+powershell -command "Start-BitsTransfer -Source 'https://github.com/TheDotSource/New-ISOFile/archive/refs/heads/main.zip' -Destination '%~dp0'"
+powershell -command "Expand-Archive -Path '%~dp0main.zip' -Force"
+move "%~dp0main\New-ISOFile-main\New-ISOFile.ps1" "%~dp0" & RMDIR /S /Q "%~dp0main" & DEL "%~dp0main.zip" /S /Q
+ )
 if not exist "%Fullpath%\efi\microsoft\boot\efisys.bin" powershell write-host -fore darkyellow Not exist Boot file '''%isoName%\efi\microsoft\boot\efisys.bin''' & pause & goto sel
 
 set lab=
