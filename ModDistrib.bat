@@ -78,15 +78,15 @@ echo.--------------------Folders--------------------------
 if not exist "%Fullpath%\sources\install.*" powershell write-host -fore darkyellow  Entered Dir not contain 'install.wim' Pls, choose again & goto def
 powershell write-host -fore yellow InPath : %Fullpath%
 attrib -r "%Fullpath%\*.*" /s /d
-if exist "%Fullpath%\sources\install.wim" goto outd
+for %%I in ("%Fullpath%\.") do set "isoName=%%~nxI"
+for %%i in ("%Fullpath%.") do set "out=%%~dpi"
+powershell write-host -fore yellow OutDir : %out%
+if exist "%Fullpath%\sources\install.wim" goto inf
 :esd
 if not exist "%Fullpath%\sources\install.esd" powershell write-host -fore yellow Dir %Fullpath%\sources not contain install.esd & goto sel
 echo.--------------------ESD Info------------------------------
 if exist "%Fullpath%\sources\install.esd" dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.esd" & echo 'install.esd' will convert to 'install.wim'
 
-echo.
-for %%I in ("%Fullpath%\.") do set ParentFolderName=%%~nxI
-for %%i in ("%Fullpath%.") do set "out=%%~dpi"
 :esdc
 SET choice=
 SET /p "choice=Enter(cont.)/M(Menu): "
@@ -110,7 +110,7 @@ DISM /Export-Image /SourceImageFile:"%Fullpath%\sources\install.esd" /SourceInde
 powershell write-host -fore darkyellow ESD Index:%%a was converted
  )
 echo.
-powershell write-host -fore yellow ESD to WIM of Index:%sein% was converted ! & goto outd
+powershell write-host -fore yellow ESD to WIM of Index:%sein% was converted ! & goto inf
 :con
 echo ----------Convert Wim index to ESD image-------------
 echo Enter indexes separated by spaces,like(5, 1, 2) : 
@@ -131,10 +131,7 @@ powershell write-host -fore darkyellow WIM Index:%%a was converted
  )
 echo.
 powershell write-host -fore yellow WIM to ESD  of Index:%sein% was converted ! & goto inf
-:outd
-for %%I in ("%Fullpath%\.") do set ParentFolderName=%%~nxI
-for %%i in ("%Fullpath%.") do set "out=%%~dpi"
-powershell write-host -fore yellow OutDir : %out%
+
 :inf
 if exist "%Fullpath%\sources\install.esd" echo --------------------ESD Info------------------------------ & dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.esd"
 echo.--------------------Wim Info------------------------------
@@ -161,15 +158,15 @@ goto sel
 :iso
 echo.--------------------Make Iso Distr------------------------------
 if not exist "%~dp0New-ISOFile.ps1" powershell write-host -fore darkyellow To make Boot Iso, download '''New-ISOFile.ps1''': https://github.com/TheDotSource/New-ISOFile & pause & goto sel
-if not exist "%Fullpath%\efi\microsoft\boot\efisys.bin" powershell write-host -fore darkyellow Not exist Boot file '''%ParentFolderName%\efi\microsoft\boot\efisys.bin''' & pause & goto sel
+if not exist "%Fullpath%\efi\microsoft\boot\efisys.bin" powershell write-host -fore darkyellow Not exist Boot file '''%isoName%\efi\microsoft\boot\efisys.bin''' & pause & goto sel
 
 set lab=
 set /p "lab=Enter Iso Label: "
 set is=
-if exist "%out%%ParentFolderName%.iso" set is=New
-echo %ParentFolderName%%is%.iso %lab% is building...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& { . '%~dp0New-ISOFile.ps1'; New-ISOFile '%Fullpath%' '%out%%ParentFolderName%%is%.iso' -BootFile '%Fullpath%\efi\microsoft\boot\efisys.bin' -Title '%lab%' -Force }"
-powershell write-host -fore yellow Succefully maked %out%%ParentFolderName%%is%.iso & pause
+if exist "%out%%isoName%.iso" set is=New
+echo %isoName%%is%.iso %lab% is building...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& { . '%~dp0New-ISOFile.ps1'; New-ISOFile '%Fullpath%' '%out%%isoName%%is%.iso' -BootFile '%Fullpath%\efi\microsoft\boot\efisys.bin' -Title '%lab%' -Force }"
+powershell write-host -fore yellow Succefully maked %out%%isoName%%is%.iso & pause
 goto sel
 
 :det
