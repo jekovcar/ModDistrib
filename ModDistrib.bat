@@ -57,6 +57,8 @@ set out=%drive%ModDistrib\
 for %%i in ("%isoPath%") do set "isoName=%%~ni"
 powershell write-host -fore yellow iso unpacked Dir : %out%
 set Fullpath=%out%%isoName%
+for /f "delims=" %%A in ('powershell -NoProfile -Command "$m = Mount-DiskImage -ImagePath '%isoPath%' -NoDriveLetter -PassThru; $label = ($m | Get-Volume).FileSystemLabel; Dismount-DiskImage -ImagePath '%ISO_PATH%'; $label"') do set "VolLabel=%%A"
+echo Iso Label : %VolLabel%
 If exist "%out%%isoName%" echo Folder '%isoName%' already exist.& powershell write-host -fore yellow Close or Accept to proceed & pause & goto fold
 set "newLetter=Y:"
 echo Mounting %isoPath% to %newLetter%...
@@ -67,7 +69,6 @@ if %errorlevel% equ 0 (
 ) else (
     echo Error: Failed to mount ISO.
 )
-for /f "usebackq delims=" %%A in (`powershell -Command "(Get-Volume -DriveLetter '%newLetter%').FileSystemLabel"`) do set "VolLabel=%%A"
 If not exist "%out%%isoName%" mkdir "%out%%isoName%"
 echo Copying %newLetter% to %isoName%...
 robocopy %newLetter%\ "%out%%isoName%" /E /A-:SH > nul
@@ -177,9 +178,10 @@ powershell write-host -fore yellow Choosed Boot file: %boot%
 )
 :bld
 set lab=
-set /p "lab=Enter Iso Label: "
+set /p "lab=Enter Iso Label(Empty Iso Label): "
 if "%lab%"=="" set "lab=%VolLabel%"
 echo label : %lab%
+pause
 set is=
 if exist "%out%%isoName%.iso" set is=New
 echo %isoName%%is%.iso is building...
