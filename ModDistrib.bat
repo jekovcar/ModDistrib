@@ -48,8 +48,8 @@ for /F %%I in ('powershell -Command "(Test-Path -Path '%Fullpath%')"') do set TP
 If %TPath%==False powershell write-host -fore darkyellow 'Path is Invalid"," Pls to correct "&" enter again.' & powershell write-host -fore darkgray 'Prefer Short Paths without Spaces or invalid characters.' & goto def
 goto fold
 :isp
+echo ---------------Dismount-Iso-----------------------
 echo Choosed "%isoPath%"
-
 powershell Dismount-DiskImage -ImagePath '%isoPath%'
 for %%A in ("%isoPath%") do set "drive=%%~dA\"
 If not exist "%drive%ModDistrib" mkdir "%drive%ModDistrib"
@@ -67,6 +67,7 @@ if %errorlevel% equ 0 (
 ) else (
     echo Error: Failed to mount ISO.
 )
+for /f "usebackq delims=" %%A in (`powershell -Command "(Get-Volume -DriveLetter '%newLetter%').FileSystemLabel"`) do set "VolLabel=%%A"
 If not exist "%out%%isoName%" mkdir "%out%%isoName%"
 echo Copying %newLetter% to %isoName%...
 robocopy %newLetter%\ "%out%%isoName%" /E /A-:SH > nul
@@ -177,9 +178,11 @@ powershell write-host -fore yellow Choosed Boot file: %boot%
 :bld
 set lab=
 set /p "lab=Enter Iso Label: "
+if "%lab%"=="" set "lab=%VolLabel%"
+echo label : %lab%
 set is=
 if exist "%out%%isoName%.iso" set is=New
-echo %isoName%%is%.iso %lab% is building...
+echo %isoName%%is%.iso is building...
 powershell -NoProfile -ExecutionPolicy Bypass -Command "& { . '%~dp0New-ISOFile.ps1'; New-ISOFile '%Fullpath%' '%out%%isoName%%is%.iso' -BootFile '%boot%' -Title '%lab%' -Force }"
 powershell write-host -fore yellow Succefully maked %out%%isoName%%is%.iso & pause
 goto sel
@@ -414,7 +417,7 @@ for /F "usebackq tokens=1,2,*" %%A IN (`reg query "%KEY_NAME%" /v "%VALUE_NAME%"
 )
 set VALUE_NAME=UBR
 for /F "usebackq tokens=1,2,*" %%A IN (`reg query "%KEY_NAME%" /v "%VALUE_NAME%" 2^>nul ^| find "%VALUE_NAME%"`) do (
-  echo "UBR"="%%C">> "%out%WimVer.reg"
+  echo "UBR"=dword:%%C>> "%out%WimVer.reg"
 )
 set VALUE_NAME=BuildLabEx
 for /F "usebackq tokens=1,2,*" %%A IN (`reg query "%KEY_NAME%" /v "%VALUE_NAME%" 2^>nul ^| find "%VALUE_NAME%"`) do (
