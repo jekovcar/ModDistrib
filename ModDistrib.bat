@@ -157,7 +157,7 @@ goto sel
 
 :iso
 echo.--------------------Make Iso Distr------------------------------
-powershell write-host -fore darkgray 'To load own Boot file remove %isoName%\efi\microsoft\boot\efisys.bin and Run again.'
+powershell write-host -fore darkgray "To '''Open Select Boot file''' remove %isoName%\efi\microsoft\boot\efisys.bin '&' Run again."
 if not exist "%~dp0New-ISOFile.ps1" (
 powershell write-host -fore darkyellow To make Boot Iso,'''New-ISOFile.ps1''' is download...
 powershell -command "Start-BitsTransfer -Source 'https://github.com/TheDotSource/New-ISOFile/archive/refs/heads/main.zip' -Destination '%~dp0'"
