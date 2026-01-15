@@ -48,7 +48,7 @@ for /F %%I in ('powershell -Command "(Test-Path -Path '%Fullpath%')"') do set TP
 If %TPath%==False powershell write-host -fore darkyellow 'Path is Invalid"," Pls to correct "&" enter again.' & powershell write-host -fore darkgray 'Prefer Short Paths without Spaces or invalid characters.' & goto def
 goto fold
 :isp
-echo ---------------Dismount-Iso-----------------------
+echo ---------------ISO Init-----------------------
 echo Choosed "%isoPath%"
 powershell Dismount-DiskImage -ImagePath '%isoPath%'
 for %%A in ("%isoPath%") do set "drive=%%~dA\"
@@ -76,7 +76,7 @@ powershell Dismount-DiskImage -ImagePath '%isoPath%'
 explorer "%out%"
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 0 /f
 :fold
-echo.--------------------Folders--------------------------
+echo.--------------------Folders init--------------------------
 if not exist "%Fullpath%\sources\install.*" powershell write-host -fore darkyellow  Entered Dir not contain 'install.wim' Pls, choose again & goto def
 powershell write-host -fore yellow InPath : %Fullpath%
 attrib -r "%Fullpath%\*.*" /s /d
