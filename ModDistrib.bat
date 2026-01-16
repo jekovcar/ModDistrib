@@ -59,7 +59,7 @@ powershell write-host -fore yellow iso unpacked Dir : %out%
 set Fullpath=%out%%isoName%
 for /f "delims=" %%A in ('powershell -NoProfile -Command "$m = Mount-DiskImage -ImagePath '%isoPath%' -NoDriveLetter -PassThru; $label = ($m | Get-Volume).FileSystemLabel; Dismount-DiskImage -ImagePath '%ISO_PATH%'; $label"') do set "VolLabel=%%A"
 echo Iso Label : %VolLabel%
-If exist "%out%%isoName%" echo Folder '%isoName%' already exist.& powershell write-host -fore yellow Close or Accept to proceed & pause & goto fold
+If exist "%out%%isoName%" echo Folder '%isoName%' already exist. & powershell write-host -fore yellow Close or Accept to proceed & pause & goto fold
 set "newLetter=Y:"
 echo Mounting %isoPath% to %newLetter%...
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 1 /f
@@ -159,7 +159,7 @@ goto sel
 
 :iso
 echo.--------------------Make Iso Distr------------------------------
-powershell write-host -fore darkgray "To '''Open Select Boot file''' remove %isoName%\efi\microsoft\boot\efisys.bin '&' Run again."
+powershell write-host -fore darkgray "To '''Open Select Boot file''' remove distrib\efi\microsoft\boot\efisys.bin '&' Run again."
 if not exist "%~dp0New-ISOFile.ps1" (
 powershell write-host -fore darkyellow To make Boot Iso,'''New-ISOFile.ps1''' is download...
 powershell -command "Start-BitsTransfer -Source 'https://github.com/TheDotSource/New-ISOFile/archive/refs/heads/main.zip' -Destination '%~dp0'"
@@ -178,7 +178,7 @@ powershell write-host -fore yellow Choosed Boot file: %boot%
 )
 :bld
 set lab=
-set /p "lab=Enter Iso Label(Empty Iso Label): "
+set /p "lab=Enter Iso Label '%VolLabel%': "
 if "%lab%"=="" set "lab=%VolLabel%"
 echo label : %lab%
 pause
