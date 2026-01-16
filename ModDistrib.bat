@@ -159,29 +159,39 @@ goto sel
 
 :iso
 echo.--------------------Make Iso Distr------------------------------
-powershell write-host -fore darkgray "To '''Open Select Boot file''' remove distrib\efi\microsoft\boot\efisys.bin '&' Run again."
 if not exist "%~dp0New-ISOFile.ps1" (
 powershell write-host -fore darkyellow To make Boot Iso,'''New-ISOFile.ps1''' is download...
 powershell -command "Start-BitsTransfer -Source 'https://github.com/TheDotSource/New-ISOFile/archive/refs/heads/main.zip' -Destination '%~dp0'"
 powershell -command "Expand-Archive -Path '%~dp0main.zip' -Force"
 move "%~dp0main\New-ISOFile-main\New-ISOFile.ps1" "%~dp0" & RMDIR /S /Q "%~dp0main" & DEL "%~dp0main.zip" /S /Q
  )
-set boot=
-if exist "%Fullpath%\efi\microsoft\boot\efisys.bin" set "boot=%Fullpath%\efi\microsoft\boot\efisys.bin" & goto bld
-if not exist "%Fullpath%\efi\microsoft\boot\efisys.bin" powershell write-host -fore darkyellow Not exist Boot file '''%isoName%\efi\microsoft\boot\efisys.bin''' Pls, select & pause
-for /f "delims=" %%b in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'efisys bin (*.bin)|*.bin|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
-') do set boot=%%b
-IF NOT DEFINED boot (
-    ECHO NOT Choiced Boot file, Iso will be not bootable
-) ELSE (
-powershell write-host -fore yellow Choosed Boot file: %boot%
-)
-:bld
+
 set lab=
 set /p "lab=Enter Iso Label '%VolLabel%': "
 if "%lab%"=="" set "lab=%VolLabel%"
 echo label : %lab%
+
+set boot=
+if exist "%Fullpath%\efi\microsoft\boot\efisys.bin" set "boot=%Fullpath%\efi\microsoft\boot\efisys.bin" & goto bld
+if not exist "%Fullpath%\efi\microsoft\boot\efisys.bin" powershell write-host -fore darkyellow Not exist Boot file '''%isoName%\efi\microsoft\boot\efisys.bin''' Pls, select & goto boot
+:bld
+SET choice=
+SET /p "choice=Enter(cont.)/B(Select Boot file): "
+IF /i '%choice%'=='b' goto boot
+IF /i '%choice%'=='' goto mki
+goto bld
+
+:boot
+for /f "delims=" %%b in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'efisys bin (*.bin)|*.bin|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
+') do set boot=%%b
+IF NOT DEFINED boot (
+    ECHO NOT Choiced Boot file, Iso will Not bootable
+) ELSE (
+powershell write-host -fore yellow Choosed Boot file: %boot%
 pause
+)
+
+:mki
 set is=
 if exist "%out%%isoName%.iso" set is=New
 echo %isoName%%is%.iso is building...
