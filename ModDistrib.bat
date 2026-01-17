@@ -57,9 +57,6 @@ set out=%drive%ModDistrib\
 for %%i in ("%isoPath%") do set "isoName=%%~ni"
 powershell write-host -fore yellow iso unpacked Dir : %out%
 set Fullpath=%out%%isoName%
-for /f "delims=" %%A in ('powershell -NoProfile -Command "$m = Mount-DiskImage -ImagePath '%isoPath%' -NoDriveLetter -PassThru; $label = ($m | Get-Volume).FileSystemLabel; Dismount-DiskImage -ImagePath '%ISO_PATH%'; $label"') do set "VolLabel=%%A"
-echo Iso Label : %VolLabel%
-If exist "%out%%isoName%" echo Folder '%isoName%' already exist. & powershell write-host -fore yellow Close or Accept to proceed & pause & goto fold
 set "newLetter=Y:"
 echo Mounting %isoPath% to %newLetter%...
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 1 /f
@@ -69,11 +66,14 @@ if %errorlevel% equ 0 (
 ) else (
     echo Error: Failed to mount ISO.
 )
+for /f "usebackq delims=" %%A in (`powershell -Command "(Get-Volume -DriveLetter '%newLetter%').FileSystemLabel"`) do set "VolLabel=%%A"
+powershell write-host -fore yellow iso Label : %VolLabel%
+If exist "%out%%isoName%" echo Folder '%isoName%' already exist. & goto dmi
 If not exist "%out%%isoName%" mkdir "%out%%isoName%"
 echo Copying %newLetter% to %isoName%...
 robocopy %newLetter%\ "%out%%isoName%" /E /A-:SH > nul
+:dmi
 powershell Dismount-DiskImage -ImagePath '%isoPath%'
-explorer "%out%"
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 0 /f
 :fold
 echo.--------------------Folders init--------------------------
@@ -176,7 +176,7 @@ if exist "%Fullpath%\efi\microsoft\boot\efisys.bin" set "boot=%Fullpath%\efi\mic
 if not exist "%Fullpath%\efi\microsoft\boot\efisys.bin" powershell write-host -fore darkyellow Not exist Boot file '''%isoName%\efi\microsoft\boot\efisys.bin''' Pls, select & goto boot
 :bld
 SET choice=
-SET /p "choice=Enter(cont.)/B(Select Boot file): "
+SET /p "choice=Enter(cont.)/B(boot file): "
 IF /i '%choice%'=='b' goto boot
 IF /i '%choice%'=='' goto mki
 goto bld
