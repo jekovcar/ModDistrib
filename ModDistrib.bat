@@ -73,7 +73,7 @@ If not exist "%out%%isoName%" mkdir "%out%%isoName%"
 echo Copying %newLetter% to %isoName%...
 robocopy %newLetter%\ "%out%%isoName%" /E /A-:SH > nul
 :dmi
-powershell Dismount-DiskImage -ImagePath '%isoPath%'
+powershell Dismount-DiskImage -ImagePath '%isoPath%' > nul
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 0 /f
 :fold
 echo.--------------------Folders init--------------------------
