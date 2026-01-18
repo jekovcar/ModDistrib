@@ -50,13 +50,18 @@ goto fold
 :isp
 echo ---------------ISO Init-----------------------
 echo Choosed "%isoPath%"
-powershell Dismount-DiskImage -ImagePath '%isoPath%'
+powershell Dismount-DiskImage -ImagePath '%isoPath%' > nul
 for %%A in ("%isoPath%") do set "drive=%%~dA\"
 If not exist "%drive%ModDistrib" mkdir "%drive%ModDistrib"
 set out=%drive%ModDistrib\
 for %%i in ("%isoPath%") do set "isoName=%%~ni"
 powershell write-host -fore yellow iso unpacked Dir : %out%
 set Fullpath=%out%%isoName%
+If exist "%out%%isoName%" (
+echo Folder '%isoName%' already exist.
+for /f "delims=" %%A in ('powershell -NoProfile -Command "$m = Mount-DiskImage -ImagePath '%isoPath%' -NoDriveLetter -PassThru; $label = ($m | Get-Volume).FileSystemLabel; Dismount-DiskImage -ImagePath '%isoPath%'; $label"') do set "VolLabel=%%A"
+goto dmi
+ )
 set "newLetter=Y:"
 echo Mounting %isoPath% to %newLetter%...
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 1 /f
@@ -67,14 +72,13 @@ if %errorlevel% equ 0 (
     echo Error: Failed to mount ISO.
 )
 for /f "usebackq delims=" %%A in (`powershell -Command "(Get-Volume -DriveLetter '%newLetter%').FileSystemLabel"`) do set "VolLabel=%%A"
-powershell write-host -fore yellow iso Label : %VolLabel%
-If exist "%out%%isoName%" echo Folder '%isoName%' already exist. & goto dmi
 If not exist "%out%%isoName%" mkdir "%out%%isoName%"
 echo Copying %newLetter% to %isoName%...
 robocopy %newLetter%\ "%out%%isoName%" /E /A-:SH > nul
-:dmi
-powershell Dismount-DiskImage -ImagePath '%isoPath%' > nul
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 0 /f
+:dmi
+powershell write-host -fore yellow iso Label : %VolLabel%
+powershell Dismount-DiskImage -ImagePath '%isoPath%' > nul
 :fold
 echo.--------------------Folders init--------------------------
 if not exist "%Fullpath%\sources\install.*" powershell write-host -fore darkyellow  Entered Dir not contain 'install.wim' Pls, choose again & goto def
