@@ -126,8 +126,10 @@ echo Sorting...
 for /f "delims=" %%i in ('powershell -Command "('%rein%,' -split ' ' | Sort { [int]$_ }) -join ' '"') do set sein=%%i
 powershell write-host -fore yellow Selected WIM to ESD Index: '%sein%'
 powershell write-host "Note:This process will require significant resources and time !" -Foregroundcolor Darkred -BackgroundColor yellow
-echo (old install.esd will be install.esd.back)
+powershell write-host -fore yellow Will open new window '''keep AWAKE''' to prevent Sleep',' after convert Close it manually.
+powershell write-host -fore darkyellow '(old install.esd will be install.esd.back)'
 pause
+start "keep AWAKE" cmd /k powershell -command "while($true) { (New-Object -ComObject WScript.Shell).SendKeys('{F15}'); Start-Sleep -Seconds 60 }"
 if exist "%Fullpath%\sources\install.esd" move "%Fullpath%\sources\install.esd" "%Fullpath%\sources\install.esd.back"
 set i=0
 for %%a in (%sein%) do (
@@ -136,6 +138,7 @@ dism /Export-Image /SourceImageFile:"%Fullpath%\sources\install.wim" /SourceInde
 powershell write-host -fore darkyellow WIM Index:%%a was converted
  )
 echo.
+powershell write-host -fore darkyellow Now can Close '''keep AWAKE''' window manually.
 powershell write-host -fore yellow WIM to ESD  of Index:%sein% was converted ! & goto inf
 
 :inf
