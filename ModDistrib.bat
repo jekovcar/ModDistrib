@@ -126,8 +126,8 @@ echo Sorting...
 for /f "delims=" %%i in ('powershell -Command "('%rein%,' -split ' ' | Sort { [int]$_ }) -join ' '"') do set sein=%%i
 powershell write-host -fore yellow Selected WIM to ESD Index: '%sein%'
 powershell write-host "Note:This process will require significant resources and time !" -Foregroundcolor Darkred -BackgroundColor yellow
-powershell write-host -fore yellow Will open new window '''keep AWAKE''' to prevent Sleep',' after convert Close it manually.
-powershell write-host -fore darkyellow '(old install.esd will be install.esd.back)'
+powershell write-host -fore darkyellow Will open new window '''keep AWAKE''' to prevent Sleep',' after convert Close it manually.
+powershell write-host -fore darkgray '(old install.esd will be install.esd.back)'
 pause
 start "keep AWAKE" cmd /k powershell -command "while($true) { (New-Object -ComObject WScript.Shell).SendKeys('{F15}'); Start-Sleep -Seconds 60 }"
 if exist "%Fullpath%\sources\install.esd" move "%Fullpath%\sources\install.esd" "%Fullpath%\sources\install.esd.back"
