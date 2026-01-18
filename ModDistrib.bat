@@ -31,7 +31,7 @@ powershell Write-Host "-extract'('w/o import')'/replace kernel32.dll',' WimVers.
 powershell Write-Host "-Ё§ў«ҐзҐ­ЁҐ'('ЎҐ§ Ё¬Ї®ав ')'/Ї®¤¬Ґ­  kernel32.dll',' WimVers.reg ў Win10/11 ISO Ё«Ё а бЇ Є®ўЄҐ" -Foregroundcolor yellow -BackgroundColor darkBlue
 
 Powershell Get-WindowsImage -Mounted
-powershell Write-Host "IF NOT select ISO', 'you can Enter path of unpacked distrib" -ForegroundColor yellow; Start-Sleep -Seconds 1
+powershell write-host -fore yellow "IF NOT select ISO', 'you can Enter path of unpacked distrib"
 :start
 set isoPath=
 for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'ISO file (*.iso)|*.iso|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
@@ -400,7 +400,7 @@ if exist "%out%kernel32.dll" move "%out%kernel32.dll" "%out%Build%kever%\kernel3
 powershell write-host -fore yellow 'kernel32.dll' was extracted !
 set kern=
 echo ----------Import Kernel32-------------
-powershell Write-Host "IF NOT select File', 'will be only extract" -ForegroundColor darkyellow; Start-Sleep -Seconds 1
+powershell write-host -fore yellow "IF NOT select File', 'will be only extract"
 for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'kernel32 (*.dll)|*.dll|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
 ') do set kern=%%i
 IF NOT DEFINED kern (
@@ -449,7 +449,7 @@ DEL /S /Q "%out%WimVer.reg"
 powershell write-host -fore yellow 'WimExp%Build%.reg' was exported !
 set wrg=
 echo ----------Import reg-------------
-powershell Write-Host "IF NOT select File', 'will be only extract" -ForegroundColor darkyellow; Start-Sleep -Seconds 1
+powershell write-host -fore yellow "IF NOT select File', 'will be only extract"
 for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'Wim (*.reg)|*.reg|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
 ') do set wrg=%%i
 IF NOT DEFINED wrg (
