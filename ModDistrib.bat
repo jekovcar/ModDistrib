@@ -179,6 +179,7 @@ powershell -command "Expand-Archive -Path '%~dp0main.zip' -Force"
 move "%~dp0main\New-ISOFile-main\New-ISOFile.ps1" "%~dp0" & RMDIR /S /Q "%~dp0main" & DEL "%~dp0main.zip" /S /Q
  )
 
+if "%VolLabel%"=="" set "VolLabel=DVD_ROM"
 set lab=
 set /p "lab=Enter Iso Label '%VolLabel%': "
 if "%lab%"=="" set "lab=%VolLabel%"
