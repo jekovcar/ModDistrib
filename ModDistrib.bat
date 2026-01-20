@@ -46,6 +46,7 @@ set /p Fullpath="Enter Full path distrib(bef.\sources) : "
 if "%Fullpath%"=="" powershell write-host -fore darkyellow Path is Empty & pause & goto start
 for /F %%I in ('powershell -Command "(Test-Path -Path '%Fullpath%')"') do set TPath=%%I
 If %TPath%==False powershell write-host -fore darkyellow 'Path is Invalid"," Pls to correct "&" enter again.' & powershell write-host -fore darkgray 'Prefer Short Paths without Spaces or invalid characters.' & goto def
+set "VolLabel=DVD_ROM"
 goto fold
 :isp
 echo ---------------ISO Init-----------------------
@@ -179,7 +180,6 @@ powershell -command "Expand-Archive -Path '%~dp0main.zip' -Force"
 move "%~dp0main\New-ISOFile-main\New-ISOFile.ps1" "%~dp0" & RMDIR /S /Q "%~dp0main" & DEL "%~dp0main.zip" /S /Q
  )
 
-if "%VolLabel%"=="" set "VolLabel=DVD_ROM"
 set lab=
 set /p "lab=Enter Iso Label '%VolLabel%': "
 if "%lab%"=="" set "lab=%VolLabel%"
