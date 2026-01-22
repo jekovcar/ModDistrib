@@ -68,13 +68,7 @@ for /f %%L in ('powershell -Command "$free = ([char[]](67..90) | ? { -not (Get-P
 
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 1 /f > nul
 powershell -Command "$mount = Mount-DiskImage -ImagePath '%isoPath%' -NoDriveLetter -PassThru; $volId = ($mount | Get-Volume).UniqueId; mountvol %newLetter% $volId"
-if %errorlevel% equ 0 (
-    echo Unpacking Iso to %out%%isoName%...
-) else (
-    echo Error: Failed to mount ISO.
-    powershell Dismount-DiskImage -ImagePath '%isoPath%' > nul 
-    goto def
-)
+echo Unpacking Iso to %out%%isoName%...
 for /f "usebackq delims=" %%A in (`powershell -Command "(Get-Volume -DriveLetter '%newLetter%').FileSystemLabel"`) do set "VolLabel=%%A"
 If not exist "%out%%isoName%" mkdir "%out%%isoName%"
 robocopy %newLetter%\ "%out%%isoName%" /E /A-:SH > nul
