@@ -31,7 +31,7 @@ powershell Write-Host "-extract'('w/o import')'/replace kernel32.dll',' WimVers.
 powershell Write-Host "-Ё§ў«ҐзҐ­ЁҐ'('ЎҐ§ Ё¬Ї®ав ')'/Ї®¤¬Ґ­  kernel32.dll',' WimVers.reg ў Win10/11 ISO Ё«Ё а бЇ Є®ўЄҐ" -Foregroundcolor yellow -BackgroundColor darkBlue
 
 Powershell Get-WindowsImage -Mounted
-powershell write-host -fore yellow "IF NOT select ISO', 'you can Enter path of unpacked distrib"
+powershell write-host -fore darkyellow "IF NOT select ISO', 'you can Enter path of unpacked distrib"
 :start
 set isoPath=
 for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'ISO file (*.iso)|*.iso|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
@@ -406,23 +406,25 @@ if exist "%out%kernel32.dll" move "%out%kernel32.dll" "%out%Build%kever%\kernel3
 powershell write-host -fore yellow 'kernel32.dll' was extracted !
 set kern=
 echo ----------Import Kernel32-------------
-powershell write-host -fore yellow "IF NOT select File', 'will be only extract"
+powershell write-host -fore darkyellow "IF NOT select File', 'will be only extract"
 for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'kernel32 (*.dll)|*.dll|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
 ') do set kern=%%i
 IF NOT DEFINED kern (
     ECHO NOT Choiced Kernel32.dll to import
 ) ELSE (
-powershell write-host -fore yellow Choiced Kernel32.dll will replace
-takeown /f "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" & icacls "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" /grant Administrators:rx
-if exist "%out%AIKMount\windows\system32\WebThreatDefSvc" takeown /f "%out%AIKMount\windows\system32\WebThreatDefSvc" & icacls "%out%AIKMount\windows\system32\WebThreatDefSvc" /grant Administrators:rx
-takeown /f "%out%AIKMount\windows\system32\kernel32.dll" & icacls "%out%AIKMount\windows\system32\kernel32.dll" /grant Administrators:F /t
+echo Choiced Kernel32.dll will replace
+takeown /f "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" > nul & icacls "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" /grant Administrators:rx > nul
+if exist "%out%AIKMount\windows\system32\WebThreatDefSvc" takeown /f "%out%AIKMount\windows\system32\WebThreatDefSvc" > nul & icacls "%out%AIKMount\windows\system32\WebThreatDefSvc" /grant Administrators:rx > nul
+takeown /f "%out%AIKMount\windows\system32\kernel32.dll" > nul & icacls "%out%AIKMount\windows\system32\kernel32.dll" /grant Administrators:F /t > nul
 move "%out%AIKMount\windows\system32\kernel32.dll" "%out%AIKMount\windows\system32\kernel32.dll.ax"
 xcopy /S /-I /Q /Y "%kern%" "%out%AIKMount\windows\system32"
+powershell write-host -fore yellow Choiced Kernel32.dll was replaced Successfully
 )
-takeown /f "%out%AIKMount\windows\system32\config\software" & icacls "%out%AIKMount\windows\system32\config\software" /grant Administrators:F /t
+takeown /f "%out%AIKMount\windows\system32\config\software" > nul & icacls "%out%AIKMount\windows\system32\config\software" /grant Administrators:F /t > nul
 reg load HKLM\WimRegistry "%out%AIKMount\windows\system32\config\software"
+powershell write-host -fore darkgray .....................................
 Echo Registry was loaded WimRegistry !
-if exist "%out%WimVer.reg" DEL /S /Q "%out%WimVer.reg"
+if exist "%out%WimVer.reg" DEL /S /Q "%out%WimVer.reg" > nul
 echo Windows Registry Editor Version 5.00>> "%out%WimVer.reg"
 echo.>> "%out%WimVer.reg"
 echo [HKEY_LOCAL_MACHINE\WimRegistry\Microsoft\Windows NT\CurrentVersion]>> "%out%WimVer.reg"
@@ -451,11 +453,11 @@ for /F "usebackq tokens=1,2,*" %%A IN (`reg query "%KEY_NAME%" /v "%VALUE_NAME%"
 )
 
 powershell -Command "(gc '%out%WimVer.reg') -replace 'WimRegistry', 'SOFTWARE' | Out-File -encoding Unicode '%out%Build%kever%\WimExp%Build%.reg'
-DEL /S /Q "%out%WimVer.reg"
+DEL /S /Q "%out%WimVer.reg" > nul
 powershell write-host -fore yellow 'WimExp%Build%.reg' was exported !
 set wrg=
 echo ----------Import reg-------------
-powershell write-host -fore yellow "IF NOT select File', 'will be only extract"
+powershell write-host -fore darkyellow "IF NOT select File', 'will be only extract"
 for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'Wim (*.reg)|*.reg|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
 ') do set wrg=%%i
 IF NOT DEFINED wrg (
@@ -463,10 +465,11 @@ IF NOT DEFINED wrg (
 reg unload HKLM\WimRegistry
 dism /unmount-wim /mountdir:"%out%AIKMount" /discard
 ) ELSE (
-powershell write-host -fore yellow Choiced Reg file will replace
+echo Choiced Reg file will replace
 powershell -Command "(gc '%wrg%') -replace 'SOFTWARE', 'WimRegistry' | Out-File -encoding Unicode '%out%Build%kever%\WimImp.reg'
 reg import "%out%Build%kever%\WimImp.reg"
-DEL /S /Q "%out%Build%kever%\WimImp.reg"
+powershell write-host -fore yellow Choiced Reg file was replaced Successfully
+DEL /S /Q "%out%Build%kever%\WimImp.reg" > nul
 reg unload HKLM\WimRegistry
 dism /unmount-wim /mountdir:"%out%AIKMount" /commit
 )
