@@ -66,17 +66,17 @@ goto dmi
 
 for /f %%L in ('powershell -Command "$free = ([char[]](67..90) | ? { -not (Get-PSDrive $_ -ErrorAction SilentlyContinue) })[0]; echo $free"') do set newLetter=%%L:
 
-echo Mounting %isoPath% to %newLetter%...
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 1 /f > nul
 powershell -Command "$mount = Mount-DiskImage -ImagePath '%isoPath%' -NoDriveLetter -PassThru; $volId = ($mount | Get-Volume).UniqueId; mountvol %newLetter% $volId"
 if %errorlevel% equ 0 (
-    echo Success: ISO mounted to %newLetter%
+    echo Unpacking Iso to %out%%isoName%...
 ) else (
     echo Error: Failed to mount ISO.
+    powershell Dismount-DiskImage -ImagePath '%isoPath%' > nul 
+    goto def
 )
 for /f "usebackq delims=" %%A in (`powershell -Command "(Get-Volume -DriveLetter '%newLetter%').FileSystemLabel"`) do set "VolLabel=%%A"
 If not exist "%out%%isoName%" mkdir "%out%%isoName%"
-echo Copying %newLetter% to %isoName%...
 robocopy %newLetter%\ "%out%%isoName%" /E /A-:SH > nul
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 0 /f > nul
 :dmi
