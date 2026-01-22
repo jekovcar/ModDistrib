@@ -56,7 +56,7 @@ for %%A in ("%isoPath%") do set "drive=%%~dA\"
 If not exist "%drive%ModDistrib" mkdir "%drive%ModDistrib"
 set out=%drive%ModDistrib\
 for %%i in ("%isoPath%") do set "isoName=%%~ni"
-powershell write-host -fore yellow iso unpacked Dir : %out%
+powershell write-host -fore yellow iso unpack Dir : %out%
 set Fullpath=%out%%isoName%
 If exist "%out%%isoName%" (
 echo Folder '%isoName%' already exist.
