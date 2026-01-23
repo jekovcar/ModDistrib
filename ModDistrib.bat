@@ -454,7 +454,7 @@ for /F "usebackq tokens=1,2,*" %%A IN (`reg query "%KEY_NAME%" /v "%VALUE_NAME%"
 
 powershell -Command "(gc '%out%WimVer.reg') -replace 'WimRegistry', 'SOFTWARE' | Out-File -encoding Unicode '%out%Build%kever%\WimExp%Build%.reg'
 DEL /S /Q "%out%WimVer.reg" > nul
-powershell write-host -fore yellow 'WimExp%Build%.reg' was exported !
+powershell write-host -fore yellow 'WimExp%Build%.reg' was extracted !
 set wrg=
 echo ----------Import reg-------------
 powershell write-host -fore darkyellow "IF NOT select File', 'will be only extract"
