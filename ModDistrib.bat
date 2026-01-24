@@ -411,8 +411,8 @@ dism /mount-wim /wimfile:"%Fullpath%\sources\install.wim" /index:%ind% /mountdir
 powershell write-host -fore cyan Install.wim was mounted in %out%AIKMount '!'
 xcopy /S /-I /Q /Y "%out%AIKMount\windows\system32\kernel32.dll" "%out%"
 for /F %%I in ('powershell -Command "(Get-Item -LiteralPath '%out%kernel32.dll').VersionInfo.FileVersion"') do set kever=%%I
-If not exist "%out%Build%kever%" mkdir "%out%Build%kever%"
-if exist "%out%kernel32.dll" move "%out%kernel32.dll" "%out%Build%kever%\kernel32.dll"
+If not exist "%out%Build%kever%_ind_%ind%" mkdir "%out%Build%kever%_ind_%ind%"
+if exist "%out%kernel32.dll" move "%out%kernel32.dll" "%out%Build%kever%_ind_%ind%\kernel32.dll"
 powershell write-host -fore yellow 'kernel32.dll' was extracted !
 set kern=
 echo ----------Import Kernel32-------------
@@ -462,7 +462,7 @@ for /F "usebackq tokens=1,2,*" %%A IN (`reg query "%KEY_NAME%" /v "%VALUE_NAME%"
   echo "BuildLab"="%%C">> "%out%WimVer.reg"
 )
 
-powershell -Command "(gc '%out%WimVer.reg') -replace 'WimRegistry', 'SOFTWARE' | Out-File -encoding Unicode '%out%Build%kever%\WimExp%Build%.reg'
+powershell -Command "(gc '%out%WimVer.reg') -replace 'WimRegistry', 'SOFTWARE' | Out-File -encoding Unicode '%out%Build%kever%_ind_%ind%\WimExp%Build%.reg'
 DEL /S /Q "%out%WimVer.reg" > nul
 powershell write-host -fore yellow 'WimExp%Build%.reg' was extracted !
 set wrg=
@@ -476,10 +476,10 @@ reg unload HKLM\WimRegistry
 dism /unmount-wim /mountdir:"%out%AIKMount" /discard
 ) ELSE (
 echo Choiced Reg file will replace
-powershell -Command "(gc '%wrg%') -replace 'SOFTWARE', 'WimRegistry' | Out-File -encoding Unicode '%out%Build%kever%\WimImp.reg'
-reg import "%out%Build%kever%\WimImp.reg"
+powershell -Command "(gc '%wrg%') -replace 'SOFTWARE', 'WimRegistry' | Out-File -encoding Unicode '%out%Build%kever%_ind_%ind%\WimImp.reg'
+reg import "%out%Build%kever%_ind_%ind%\WimImp.reg"
 powershell write-host -fore yellow Choiced Reg file was replaced Successfully
-DEL /S /Q "%out%Build%kever%\WimImp.reg" > nul
+DEL /S /Q "%out%Build%kever%_ind_%ind%\WimImp.reg" > nul
 reg unload HKLM\WimRegistry
 dism /unmount-wim /mountdir:"%out%AIKMount" /commit
 )
