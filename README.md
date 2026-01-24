@@ -7,7 +7,7 @@
 <br>5.Batch Export ESD to WIM
 <br>6.Batch Convert WIM to ESD
 <br>7.Detailed information about the install WIM file index
-<br>8.Unmounting folders
+<br>8.Auto unmounting old mounted image, auto remove old mount points
 <br>9.Import a install WIM file into a distribution
 <br>10.Import a boot WIM file into a distribution
 <br>11.Detailed information about the imported install/boot WIM file index
