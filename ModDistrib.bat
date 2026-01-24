@@ -26,11 +26,22 @@ if '%errorlevel%' NEQ '0' (
 
 :: CODE ADMIN:
 @echo off
+:code
 powershell Write-Host "ModDistrib" -Foregroundcolor White -BackgroundColor Blue -NoNewline 
 powershell Write-Host "-extract'('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
 powershell Write-Host "-Ё§ў«ҐзҐ­ЁҐ'('ЎҐ§ Ё¬Ї®ав ')'/Ї®¤¬Ґ­  kernel32.dll',' WimVers.reg ў Win10/11 ISO Ё«Ё а бЇ Є®ўЄҐ" -Foregroundcolor yellow -BackgroundColor darkBlue
 
 Powershell Get-WindowsImage -Mounted
+for /F %%I in ('powershell -Command "(Get-WindowsImage -Mounted).MountPath"') do set mountDir=%%I
+if defined mountDir (
+    echo Found Mount Directory: %mountDir%
+    dism /unmount-wim /mountdir:"%mountDir%" /discard
+    If exist "%mountDir%" RMDIR /S /Q "%mountDir%"
+    set mountDir=
+    cls
+goto code
+)
+dism /cleanup-wim > nul
 powershell write-host -fore darkyellow "IF NOT select ISO', 'you can Enter path of unpacked distrib"
 :start
 set isoPath=
@@ -152,9 +163,9 @@ dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
 echo.--------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
 @echo Mount Distr(M), Exp/Imp/Boot Distr(E), Remove index Distr(R), Export ESD to WIM(S)
-@echo Convert Wim to ESD(C),Details info Distr(I),Unmount(U),Make Boot Iso(N),To Start(B)?
+@echo Convert Wim to ESD(C), Details info Distr(I), Make Boot Iso(N), To Start(B)?
 SET choice=
-SET /p choice=Pls, enter M/E/R/S/C/I/U/N/B: 
+SET /p choice=Pls, enter M/E/R/S/C/I/N/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
 IF /i '%choice%'=='M' goto ext
 IF /i '%choice%'=='E' goto por
@@ -162,7 +173,6 @@ IF /i '%choice%'=='R' goto del
 IF /i '%choice%'=='S' goto esd
 IF /i '%choice%'=='C' goto con
 IF /i '%choice%'=='I' goto det
-IF /i '%choice%'=='U' goto unm
 IF /i '%choice%'=='N' goto iso
 IF /i '%choice%'=='B' goto start
 goto sel
@@ -473,11 +483,7 @@ DEL /S /Q "%out%Build%kever%\WimImp.reg" > nul
 reg unload HKLM\WimRegistry
 dism /unmount-wim /mountdir:"%out%AIKMount" /commit
 )
-goto fin
-:unm
-echo ----------Unmount mounted image-------------
-dism /unmount-wim /mountdir:"%out%AIKMount" /discard
-:fin
+
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan Install.wim was unmounted '!'
 powershell write-host -fore green Close or Edit *supported* WIM','after this',' it can be restored:  
