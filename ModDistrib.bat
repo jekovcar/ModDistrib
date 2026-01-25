@@ -34,7 +34,8 @@ powershell write-host -fore darkyellow "IF NOT select ISO', 'you can Enter path 
 Powershell Get-WindowsImage -Mounted
 for /F %%I in ('powershell -Command "(Get-WindowsImage -Mounted).MountPath"') do set mountDir=%%I
 if defined mountDir (
-    echo Found Mount Directory: %mountDir%
+    powershell write-host -fore red Unmount Wim ImagePath in: %mountDir%
+    pause
     dism /unmount-wim /mountdir:"%mountDir%" /discard
     If exist "%mountDir%" RMDIR /S /Q "%mountDir%"
     set mountDir=
