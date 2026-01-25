@@ -31,9 +31,10 @@ powershell Write-Host "ModDistrib" -Foregroundcolor White -BackgroundColor Blue 
 powershell Write-Host "-extract'('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
 powershell Write-Host "-Ё§ў«ҐзҐ­ЁҐ'('ЎҐ§ Ё¬Ї®ав ')'/Ї®¤¬Ґ­  kernel32.dll',' WimVers.reg ў Win10/11 ISO Ё«Ё а бЇ Є®ўЄҐ" -Foregroundcolor yellow -BackgroundColor darkBlue
 powershell write-host -fore darkyellow "IF NOT select ISO', 'you can Enter path of unpacked distrib"
-Powershell Get-WindowsImage -Mounted
+
 for /F %%I in ('powershell -Command "(Get-WindowsImage -Mounted).MountPath"') do set mountDir=%%I
 if defined mountDir (
+    Powershell Get-WindowsImage -Mounted
     powershell write-host -fore red "Unmount ImagePath in Path" -NoNewline & echo  : %mountDir%
     pause
     dism /unmount-wim /mountdir:"%mountDir%" /discard
