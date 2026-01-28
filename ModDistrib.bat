@@ -62,8 +62,9 @@ set "VolLabel=DVD_ROM"
 goto fold
 :isp
 echo ---------------ISO Init-----------------------
-echo Choosed "%isoPath%"
 powershell Dismount-DiskImage -ImagePath '%isoPath%' > nul
+echo Choosed "%isoPath%"
+pause
 for %%A in ("%isoPath%") do set "drive=%%~dA\"
 If not exist "%drive%ModDistrib" mkdir "%drive%ModDistrib"
 set out=%drive%ModDistrib\
