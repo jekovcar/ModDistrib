@@ -35,7 +35,7 @@ powershell write-host -fore darkyellow "IF NOT select ISO', 'you can Enter path 
 for /F %%I in ('powershell -Command "(Get-WindowsImage -Mounted).MountPath"') do set mountDir=%%I
 if defined mountDir (
     Powershell Get-WindowsImage -Mounted
-    powershell write-host -fore red "Unmount ImagePath in Path" -NoNewline & echo  : %mountDir%
+    powershell write-host -fore cyan "Unmount ImagePath in Path" -NoNewline & echo  : %mountDir%
     pause
     dism /unmount-wim /mountdir:"%mountDir%" /discard
     If exist "%mountDir%" RMDIR /S /Q "%mountDir%"
@@ -64,11 +64,13 @@ goto fold
 echo ---------------ISO Init-----------------------
 
 echo Choosed "%isoPath%"
+set isoDrive=
 for /f "tokens=1,2 delims=," %%A in ('powershell -NoProfile -Command "Get-DiskImage -ImagePath '%isoPath%' | Get-Volume | Select-Object -ExpandProperty DriveLetter"') do set "isoDrive=%%A"
 if defined isoDrive (
 powershell -Command "Dismount-DiskImage -ImagePath '%isoPath%'" > nul
-echo Iso at drive %isoDrive%: was unmount. For unpack & pause
+powershell write-host -fore darkyellow Iso at drive %isoDrive%: was unmount.
 )
+powershell write-host -fore cyan 'For unpack: ' -NoNewline & pause
 
 for %%A in ("%isoPath%") do set "drive=%%~dA\"
 If not exist "%drive%ModDistrib" mkdir "%drive%ModDistrib"
