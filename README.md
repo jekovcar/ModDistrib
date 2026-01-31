@@ -14,6 +14,7 @@
 <br>12.Delete the distribution's boot WIM file index
 <br>13.Make Boot Iso from folder distribution
 <br>14.Add Packages/view installed in distribution
+<br>15.Bypass install restrictions
 # Reference
 <p2>Function build ISO file [MSDN libr](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options?view=windows-11)
 # Download
