@@ -15,6 +15,6 @@
 <br>13.Make Boot Iso from folder distribution
 <br>14.Add Packages/view installed in distribution
 # Reference
-<p2>Function build ISO file [MSDN libr](https://msdl.microsoft.com/download/symbols/oscdimg.exe/688CABB065000/oscdimg.exe)
+<p2>Function build ISO file [MSDN libr](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options?view=windows-11)
 # Download
 [ModDistrib.zip](https://disk.yandex.ru/d/EXZZVhuYqfwpiA)
