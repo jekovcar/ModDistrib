@@ -69,9 +69,9 @@ set isoDrive=
 for /f "tokens=1,2 delims=," %%A in ('powershell -NoProfile -Command "Get-DiskImage -ImagePath '%isoPath%' | Get-Volume | Select-Object -ExpandProperty DriveLetter"') do set "isoDrive=%%A"
 if defined isoDrive (
 powershell -Command "Dismount-DiskImage -ImagePath '%isoPath%'" > nul
-powershell write-host -fore darkyellow Iso at drive %isoDrive%: was unmount.
+powershell write-host -fore cyan Iso at drive %isoDrive%: was unmount.
 )
-powershell write-host -fore cyan 'For unpack: ' -NoNewline & pause
+powershell write-host -fore darkyellow 'Check/Unpack ' -NoNewline & pause
 
 for %%A in ("%isoPath%") do set "drive=%%~dA\"
 If not exist "%drive%ModDistrib" mkdir "%drive%ModDistrib"
@@ -89,7 +89,7 @@ for /f %%L in ('powershell -Command "$free = ([char[]](67..90) | ? { -not (Get-P
 
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 1 /f > nul
 powershell -Command "$mount = Mount-DiskImage -ImagePath '%isoPath%' -NoDriveLetter -PassThru; $volId = ($mount | Get-Volume).UniqueId; mountvol %newLetter% $volId"
-echo Unpacking Iso to %out%%isoName%...
+powershell write-host -fore darkgray Unpacking Iso to %out%%isoName%...
 for /f "usebackq delims=" %%A in (`powershell -Command "(Get-Volume -DriveLetter '%newLetter%').FileSystemLabel"`) do set "VolLabel=%%A"
 If not exist "%out%%isoName%" mkdir "%out%%isoName%"
 robocopy %newLetter%\ "%out%%isoName%" /E /A-:SH > nul
@@ -123,7 +123,7 @@ echo ----------Export ESD index to WIM image-------------
 echo Enter indexes separated by spaces,like(5, 1, 2) : 
 set /p rein=
 if "%rein%"=="" powershell write-host -fore darkyellow NOT Enter Value & goto esw
-echo Sorting...
+powershell write-host -fore darkgray Sorting...
 for /f "delims=" %%i in ('powershell -Command "('%rein%,' -split ' ' | Sort { [int]$_ }) -join ' '"') do set sein=%%i
 powershell write-host -fore yellow Selected ESD to Wim Index: '%sein%'
 powershell write-host -fore cyan Will open minimized PS window '''keep AWAKE''' to prevent Sleep.
@@ -145,7 +145,7 @@ echo ----------Convert Wim index to ESD image-------------
 echo Enter indexes separated by spaces,like(5, 1, 2) : 
 set /p rein=
 if "%rein%"=="" powershell write-host -fore darkyellow NOT Enter Value & goto con
-echo Sorting...
+powershell write-host -fore darkgray Sorting...
 for /f "delims=" %%i in ('powershell -Command "('%rein%,' -split ' ' | Sort { [int]$_ }) -join ' '"') do set sein=%%i
 powershell write-host -fore yellow Selected WIM to ESD Index: '%sein%'
 powershell write-host "Note:This process will require significant resources and time !" -Foregroundcolor Darkred -BackgroundColor yellow
@@ -173,9 +173,9 @@ dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
 echo.--------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
 @echo Mount Distr(M), Exp/Imp/Boot Distr(E), Remove index Distr(R), Export ESD to WIM(S)
-@echo Convert Wim to ESD(C), Details info Distr(I), Make Boot Iso(N), To Start(B)?
+@echo Convert Wim to ESD(C), Details info Distr(I), Make Boot Iso(N),Add-PackageUpdate(U),To Start(B)?
 SET choice=
-SET /p choice=Pls, enter M/E/R/S/C/I/N/B: 
+SET /p choice=Pls, enter M/E/R/S/C/I/N/U/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
 IF /i '%choice%'=='M' goto ext
 IF /i '%choice%'=='E' goto por
@@ -184,13 +184,14 @@ IF /i '%choice%'=='S' goto esd
 IF /i '%choice%'=='C' goto con
 IF /i '%choice%'=='I' goto det
 IF /i '%choice%'=='N' goto iso
+IF /i '%choice%'=='U' goto adpk
 IF /i '%choice%'=='B' goto start
 goto sel
 
 :iso
 echo.--------------------Make Iso Distr------------------------------
 if not exist "%~dp0New-ISOFile.ps1" (
-powershell write-host -fore darkyellow To make Boot Iso,'''New-ISOFile.ps1''' is download...
+powershell write-host -fore darkgray To make Boot Iso,'''New-ISOFile.ps1''' is download...
 powershell -command "Start-BitsTransfer -Source 'https://github.com/TheDotSource/New-ISOFile/archive/refs/heads/main.zip' -Destination '%~dp0'"
 powershell -command "Expand-Archive -Path '%~dp0main.zip' -Force"
 move "%~dp0main\New-ISOFile-main\New-ISOFile.ps1" "%~dp0" & RMDIR /S /Q "%~dp0main" & DEL "%~dp0main.zip" /S /Q
@@ -224,7 +225,7 @@ pause
 :mki
 set is=
 if exist "%out%%isoName%.iso" set is=New
-echo %isoName%%is%.iso is building...
+powershell write-host -fore darkgray %isoName%%is%.iso is building...
 powershell -NoProfile -ExecutionPolicy Bypass -Command "& { . '%~dp0New-ISOFile.ps1'; New-ISOFile '%Fullpath%' '%out%%isoName%%is%.iso' -BootFile '%boot%' -Title '%lab%' -Force }"
 powershell write-host -fore yellow Succefully maked %out%%isoName%%is%.iso & pause
 goto sel
@@ -247,7 +248,7 @@ echo ----------Remove image of index-------------
 echo Enter indexes separated by spaces,like(5, 1, 2) : 
 set /p rein=
 if "%rein%"=="" powershell write-host -fore darkyellow NOT Enter Value & goto del
-echo Sorting...
+powershell write-host -fore darkgray Sorting...
 for /f "delims=" %%i in ('powershell -Command "('%rein%,' -split ' ' | Sort { [int]$_ }) -join ' '"') do set sein=%%i
 powershell write-host -fore yellow Selected WIM index to remove: '%sein%'
 for /f "delims=" %%i in ('powershell -Command "('%rein%,' -split ' ' | Sort-Object -Descending { [int]$_ }) -join ' '"') do set ein=%%i
@@ -499,4 +500,45 @@ powershell write-host -fore cyan Install.wim was unmounted '!'
 powershell write-host -fore green Close or Edit *supported* WIM','after this',' it can be restored:  
 echo (After restoring, recommended to export for reduce)
 pause
+goto inf
+:adpk
+echo ----------Add-Package to image-------------
+:pdex
+set ind=
+set /p "ind=Enter index: "
+if "%ind%"=="" echo Not Entered Value & pause & goto pdex
+if %ind% equ +%ind% (
+set ind=%ind%
+) else (
+echo %ind% is NOT a digit.
+    goto pdex
+)
+If not exist "%out%AIKMount" mkdir "%out%AIKMount"
+dism /mount-wim /wimfile:"%Fullpath%\sources\install.wim" /index:%ind% /mountdir:"%out%AIKMount"
+powershell write-host -fore cyan Install.wim was mounted in %out%AIKMount '!'
+:lmsu
+SET choice=
+SET /p "choice=Enter(cont.)/L(List Installed Updates): "
+IF /i '%choice%'=='L' goto list
+IF /i '%choice%'=='' goto msu
+goto lmsu
+:list
+powershell write-host -fore darkgray Pls, wait for listing...
+Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table | findstr "Installed"
+pause
+:msu
+set msu=
+for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'msu,cab (*.msu;*.cab)|*.msu;*.cab|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
+') do set msu=%%i
+IF NOT DEFINED msu (
+powershell write-host -fore darkyellow NOT Choiced UpdatePackage to import
+dism /unmount-wim /mountdir:"%out%AIKMount" /discard
+) ELSE (
+powershell write-host -fore yellow Choiced Package %msu% to import
+takeown /f "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" > nul & icacls "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" /grant Administrators:rx > nul
+dism /Image:"%out%AIKMount" /Add-Package /PackagePath:"%msu%"
+dism /unmount-wim /mountdir:"%out%AIKMount" /commit
+)
+If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
+powershell write-host -fore cyan Install.wim was unmounted '!'
 goto inf
