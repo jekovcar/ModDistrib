@@ -13,6 +13,7 @@
 <br>11.Detailed information about the imported install/boot WIM file index
 <br>12.Delete the distribution's boot WIM file index
 <br>13.Make Boot Iso from folder distribution w/o select a boot file
+<br>14.Add Packages/view installed in distribution
 # Reference
 <p2>Function to create ISO files https://github.com/TheDotSource/New-ISOFile
 # Download
