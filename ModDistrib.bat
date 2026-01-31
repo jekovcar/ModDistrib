@@ -167,10 +167,10 @@ dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
 :sel
 echo.--------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
-@echo Mount Distr(M), Exp/Imp/Boot Distr(E), Remove index Distr(R), Export ESD to WIM(S)
-@echo Convert Wim to ESD(C), Details info Distr(I), Make Boot Iso(N),Add-PackageUpdate(U),To Start(B)?
+@echo Mount Distr(M),Exp/Imp/Boot Distr(E),Remove index Distr(R),Export ESD to WIM(S),Install Bypass(P)
+@echo Convert Wim to ESD(C), Details info Distr(I), Make Boot Iso(N), Add-PackageUpdate(U), To Start(B)?
 SET choice=
-SET /p choice=Pls, enter M/E/R/S/C/I/N/U/B: 
+SET /p choice=Pls, enter M/E/R/S/P/C/I/N/U/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
 IF /i '%choice%'=='M' goto ext
 IF /i '%choice%'=='E' goto por
@@ -180,6 +180,7 @@ IF /i '%choice%'=='C' goto con
 IF /i '%choice%'=='I' goto det
 IF /i '%choice%'=='N' goto iso
 IF /i '%choice%'=='U' goto adpk
+IF /i '%choice%'=='P' goto bpres
 IF /i '%choice%'=='B' goto start
 goto sel
 
@@ -513,6 +514,39 @@ if %errorlevel% neq 0 (
     powershell write-host -fore yellow %msu% Package added successfully.
  )
 :ufin
+If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
+powershell write-host -fore cyan Install.wim was unmounted '!'
+pause
+goto inf
+
+:bpres
+echo ----------Bypass-install restrictions-------------
+:bdex
+set ind=
+set /p "ind=Enter index: "
+if "%ind%"=="" echo Not Entered Value & pause & goto bdex
+if %ind% equ +%ind% (
+set ind=%ind%
+) else (
+echo %ind% is NOT a digit.
+    goto bdex
+)
+If not exist "%out%AIKMount" mkdir "%out%AIKMount"
+dism /mount-wim /wimfile:"%Fullpath%\sources\install.wim" /index:%ind% /mountdir:"%out%AIKMount"
+powershell write-host -fore cyan Install.wim was mounted in %out%AIKMount '!'
+
+takeown /f "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" > nul & icacls "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" /grant Administrators:rx > nul
+if exist "%out%AIKMount\windows\system32\WebThreatDefSvc" takeown /f "%out%AIKMount\windows\system32\WebThreatDefSvc" > nul & icacls "%out%AIKMount\windows\system32\WebThreatDefSvc" /grant Administrators:rx > nul
+takeown /f "%out%AIKMount\windows\system32\config\SYSTEM" > nul & icacls "%out%AIKMount\windows\system32\config\SYSTEM" /grant Administrators:F /t > nul
+
+reg load HKLM\WimRegistry "%out%AIKMount\windows\system32\config\system"
+reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassTPMCheck /t REG_DWORD /d 1 /f
+reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassSecureBootCheck /t REG_DWORD /d 1 /f
+reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassRAMCheck /t REG_DWORD /d 1 /f
+reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassCPUCheck /t REG_DWORD /d 1 /f
+reg unload HKLM\WimRegistry
+powershell write-host -fore yellow Install restictions was bypassed.
+dism /unmount-wim /mountdir:"%out%AIKMount" /commit
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan Install.wim was unmounted '!'
 pause
