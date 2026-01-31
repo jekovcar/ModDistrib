@@ -59,7 +59,6 @@ set /p Fullpath="Enter Full path distrib(bef.\sources) : "
 if "%Fullpath%"=="" powershell write-host -fore darkyellow Path is Empty & pause & goto start
 for /F %%I in ('powershell -Command "(Test-Path -Path '%Fullpath%')"') do set TPath=%%I
 If %TPath%==False powershell write-host -fore darkyellow 'Path is Invalid"," Pls to correct "&" enter again.' & powershell write-host -fore darkgray 'Prefer Short Paths without Spaces or invalid characters.' & goto def
-set "VolLabel=DVD_ROM"
 goto fold
 :isp
 echo ---------------ISO Init-----------------------
@@ -81,8 +80,7 @@ powershell write-host -fore yellow iso unpack Dir : %out%
 set Fullpath=%out%%isoName%
 If exist "%out%%isoName%" (
 echo Folder '%isoName%' already exist.
-for /f "delims=" %%A in ('powershell -NoProfile -Command "$m = Mount-DiskImage -ImagePath '%isoPath%' -NoDriveLetter -PassThru; $label = ($m | Get-Volume).FileSystemLabel; Dismount-DiskImage -ImagePath '%isoPath%'; $label"') do set "VolLabel=%%A"
-goto dmi
+goto fold
  )
 
 for /f %%L in ('powershell -Command "$free = ([char[]](67..90) | ? { -not (Get-PSDrive $_ -ErrorAction SilentlyContinue) })[0]; echo $free"') do set newLetter=%%L:
@@ -90,12 +88,9 @@ for /f %%L in ('powershell -Command "$free = ([char[]](67..90) | ? { -not (Get-P
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 1 /f > nul
 powershell -Command "$mount = Mount-DiskImage -ImagePath '%isoPath%' -NoDriveLetter -PassThru; $volId = ($mount | Get-Volume).UniqueId; mountvol %newLetter% $volId"
 powershell write-host -fore darkgray Unpacking Iso to %out%%isoName%...
-for /f "usebackq delims=" %%A in (`powershell -Command "(Get-Volume -DriveLetter '%newLetter%').FileSystemLabel"`) do set "VolLabel=%%A"
 If not exist "%out%%isoName%" mkdir "%out%%isoName%"
 robocopy %newLetter%\ "%out%%isoName%" /E /A-:SH > nul
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 0 /f > nul
-:dmi
-powershell write-host -fore yellow iso Label : %VolLabel%
 powershell Dismount-DiskImage -ImagePath '%isoPath%' > nul
 :fold
 echo.--------------------Folders init--------------------------
@@ -190,43 +185,15 @@ goto sel
 
 :iso
 echo.--------------------Make Iso Distr------------------------------
-if not exist "%~dp0New-ISOFile.ps1" (
-powershell write-host -fore darkgray To make Boot Iso,'''New-ISOFile.ps1''' is download...
-powershell -command "Start-BitsTransfer -Source 'https://github.com/TheDotSource/New-ISOFile/archive/refs/heads/main.zip' -Destination '%~dp0'"
-powershell -command "Expand-Archive -Path '%~dp0main.zip' -Force"
-move "%~dp0main\New-ISOFile-main\New-ISOFile.ps1" "%~dp0" & RMDIR /S /Q "%~dp0main" & DEL "%~dp0main.zip" /S /Q
+if not exist "%~dp0Oscdimg.exe" (
+powershell write-host -fore darkyellow Missed Oscdimg. To download & pause
+powershell -command "Start-BitsTransfer -Source 'https://msdl.microsoft.com/download/symbols/oscdimg.exe/688CABB065000/oscdimg.exe' -Destination '%~dp0'"
+if exist "%~dp0Oscdimg.exe" powershell write-host -fore darkyellow Now exist Oscdimg. To build Iso & pause
  )
-
-set lab=
-set /p "lab=Enter Iso Label '%VolLabel%': "
-if "%lab%"=="" set "lab=%VolLabel%"
-echo label : %lab%
-
-set boot=
-if exist "%Fullpath%\efi\microsoft\boot\efisys.bin" set "boot=%Fullpath%\efi\microsoft\boot\efisys.bin" & goto bld
-if not exist "%Fullpath%\efi\microsoft\boot\efisys.bin" powershell write-host -fore darkyellow Not exist Boot file '''%isoName%\efi\microsoft\boot\efisys.bin''' Pls, select & goto boot
-:bld
-SET choice=
-SET /p "choice=Enter(cont.)/B(boot file): "
-IF /i '%choice%'=='b' goto boot
-IF /i '%choice%'=='' goto mki
-goto bld
-
-:boot
-for /f "delims=" %%b in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'efisys bin (*.bin)|*.bin|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
-') do set boot=%%b
-IF NOT DEFINED boot (
-    ECHO NOT Choiced Boot file, Iso will Not bootable
-) ELSE (
-powershell write-host -fore yellow Choosed Boot file: %boot%
-pause
-)
-
-:mki
 set is=
-if exist "%out%%isoName%.iso" set is=New
+if exist "%out%%isoName%.iso" set is=_New
 powershell write-host -fore darkgray %isoName%%is%.iso is building...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& { . '%~dp0New-ISOFile.ps1'; New-ISOFile '%Fullpath%' '%out%%isoName%%is%.iso' -BootFile '%boot%' -Title '%lab%' -Force }"
+Oscdimg -bootdata:2#p0,e,b"%Fullpath%"\boot\etfsboot.com#pEF,e,b"%Fullpath%"\efi\microsoft\boot\efisys.bin -o -h -m -u2 -udfver102 "%Fullpath%" %out%%isoName%%is%.iso
 powershell write-host -fore yellow Succefully maked %out%%isoName%%is%.iso & pause
 goto sel
 
@@ -531,14 +498,22 @@ set msu=
 for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'msu,cab (*.msu;*.cab)|*.msu;*.cab|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
 ') do set msu=%%i
 IF NOT DEFINED msu (
-powershell write-host -fore darkyellow NOT Choiced UpdatePackage to import
+echo NOT Choiced UpdatePackage to import
 dism /unmount-wim /mountdir:"%out%AIKMount" /discard
-) ELSE (
+goto ufin
+)
 powershell write-host -fore yellow Choiced Package %msu% to import
 takeown /f "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" > nul & icacls "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" /grant Administrators:rx > nul
 dism /Image:"%out%AIKMount" /Add-Package /PackagePath:"%msu%"
-dism /unmount-wim /mountdir:"%out%AIKMount" /commit
-)
+if %errorlevel% neq 0 (
+    powershell write-host -fore darkyellow DISM failed with error. Discarding package...
+    dism /unmount-wim /mountdir:"%out%AIKMount" /discard
+) else (
+    dism /unmount-wim /mountdir:"%out%AIKMount" /commit
+    powershell write-host -fore yellow %msu% Package added successfully.
+ )
+:ufin
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan Install.wim was unmounted '!'
+pause
 goto inf
