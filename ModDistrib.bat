@@ -489,12 +489,12 @@ takeown /f "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" > nul & icacls
 if exist "%out%AIKMount\windows\system32\WebThreatDefSvc" takeown /f "%out%AIKMount\windows\system32\WebThreatDefSvc" > nul & icacls "%out%AIKMount\windows\system32\WebThreatDefSvc" /grant Administrators:rx > nul
 takeown /f "%out%AIKMount\windows\system32\config\SYSTEM" > nul & icacls "%out%AIKMount\windows\system32\config\SYSTEM" /grant Administrators:F /t > nul
 
-reg load HKLM\WimRegistry "%out%AIKMount\windows\system32\config\system"
-reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassTPMCheck /t REG_DWORD /d 1 /f
-reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassSecureBootCheck /t REG_DWORD /d 1 /f
-reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassRAMCheck /t REG_DWORD /d 1 /f
-reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassCPUCheck /t REG_DWORD /d 1 /f
-reg unload HKLM\WimRegistry
+reg load HKLM\WimRegistry "%out%AIKMount\windows\system32\config\system" && powershell write-host -fore darkgray Load WimRegistry
+reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassTPMCheck /t REG_DWORD /d 1 /f && powershell write-host -fore green BypassTPMCheck
+reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassSecureBootCheck /t REG_DWORD /d 1 /f && powershell write-host -fore green BypassSecureBootCheck
+reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassRAMCheck /t REG_DWORD /d 1 /f && powershell write-host -fore green BypassRAMCheck
+reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassCPUCheck /t REG_DWORD /d 1 /f && powershell write-host -fore green BypassCPUCheck
+reg unload HKLM\WimRegistry && powershell write-host -fore darkgray Unload WimRegistry
 powershell write-host -fore yellow Install restictions was bypassed.
 dism /unmount-wim /mountdir:"%out%AIKMount" /commit
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
