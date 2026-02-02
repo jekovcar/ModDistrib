@@ -31,7 +31,6 @@ title  Core_distribution_modifier
 powershell Write-Host "ModDistrib" -Foregroundcolor White -BackgroundColor Blue -NoNewline 
 powershell Write-Host "-extract'('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
 powershell Write-Host "-Ё§ў«ҐзҐ­ЁҐ'('ЎҐ§ Ё¬Ї®ав ')'/Ї®¤¬Ґ­  kernel32.dll',' WimVers.reg ў Win10/11 ISO Ё«Ё а бЇ Є®ўЄҐ" -Foregroundcolor yellow -BackgroundColor darkBlue
-powershell write-host -fore darkyellow "IF NOT select ISO', 'you can Enter path of unpacked distrib"
 
 for /F %%I in ('powershell -Command "(Get-WindowsImage -Mounted).MountPath"') do set mountDir=%%I
 if defined mountDir (
@@ -45,6 +44,7 @@ if defined mountDir (
 goto code
 )
 dism /cleanup-wim > nul
+powershell write-host -fore darkyellow "IF NOT select ISO', 'you can Enter path of unpacked distrib"
 :start
 set isoPath=
 for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'ISO file (*.iso)|*.iso|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
@@ -167,10 +167,10 @@ dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
 :sel
 echo.--------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
-@echo Mount Distr(M), Exp/Imp/Boot Distr(E), Remove index Distr(R), Export ESD to WIM(S),
-@echo Convert Wim to ESD(C), Details info Distr(I), Make Boot Iso(N), Install Bypass(P), To Start(B)?
+@echo Mount Distr(M),Exp/Imp/Boot Distr(E),Remove index Distr(R),Export ESD to WIM(S),Install Bypass(P)
+@echo Convert Wim to ESD(C), Details info Distr(I), Make Boot Iso(N), Add-PackageUpdate(U), To Start(B)?
 SET choice=
-SET /p choice=Pls, enter M/E/R/S/C/I/N/P/B: 
+SET /p choice=Pls, enter M/E/R/S/P/C/I/N/U/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
 IF /i '%choice%'=='M' goto ext
 IF /i '%choice%'=='E' goto por
@@ -179,6 +179,7 @@ IF /i '%choice%'=='S' goto esd
 IF /i '%choice%'=='C' goto con
 IF /i '%choice%'=='I' goto det
 IF /i '%choice%'=='N' goto iso
+IF /i '%choice%'=='U' goto adpk
 IF /i '%choice%'=='P' goto bpres
 IF /i '%choice%'=='B' goto start
 goto sel
@@ -466,6 +467,88 @@ If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan Install.wim was unmounted '!'
 powershell write-host -fore green Close or Edit *supported* WIM','after this',' it can be restored:  
 echo (After restoring, recommended to export for reduce)
+pause
+goto inf
+:adpk
+echo ----------Add-Package to image-------------
+:pdex
+set ind=
+set /p "ind=Enter index: "
+if "%ind%"=="" echo Not Entered Value & pause & goto pdex
+if %ind% equ +%ind% (
+set ind=%ind%
+) else (
+echo %ind% is NOT a digit.
+    goto pdex
+)
+If not exist "%out%AIKMount" mkdir "%out%AIKMount"
+dism /mount-wim /wimfile:"%Fullpath%\sources\install.wim" /index:%ind% /mountdir:"%out%AIKMount"
+powershell write-host -fore cyan Install.wim was mounted in %out%AIKMount '!'
+:lmsu
+SET choice=
+SET /p "choice=Enter(cont.)/L(List Updates): "
+IF /i '%choice%'=='L' goto list
+IF /i '%choice%'=='' goto msu
+goto lmsu
+:list
+powershell write-host -fore darkgray Pls, wait for listing...
+Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
+pause
+:msu
+powershell write-host -fore darkyellow IF NOT select dir packages',' image will Unmout.
+set msu=
+set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
+for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "msu=%%I"
+IF NOT DEFINED msu (
+echo NOT Choiced UpdatePackage to import
+:dmsu
+dism /unmount-wim /mountdir:"%out%AIKMount" /discard
+goto ufin
+)
+echo You selected: %msu%
+setlocal enabledelayedexpansion
+echo Adding updates from "%msu%" to mounted image "%out%AIKMount"
+powershell write-host -fore yellow Choiced Packages in %msu% to import',' Pls wait...
+
+powershell -NoLogo -NoProfile ^
+  "$acl = New-Object System.Security.AccessControl.DirectorySecurity;" ^
+  "$acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule('Administrators','FullControl','ContainerInherit,ObjectInherit','None','Allow')));" ^
+  "Set-Acl '%out%AIKMount' $acl"
+
+:: Loop through all .cab and .msu files
+for %%U in ("%msu%\*.cab" "%msu%\*.msu") do (
+    if exist "%%~U" (
+        echo Adding update: %%~nxU
+        echo [INFO] Adding %%~nxU
+
+        dism /image:"%out%AIKMount" /add-package /packagepath:"%%~U"
+        if errorlevel 1 (
+            echo [ERROR] Failed to add %%~nxU
+        ) else (
+            echo [OK] Added %%~nxU
+        )
+        echo.
+    )
+)
+powershell write-host -fore yellow All updates in %msu% processed.
+endlocal
+:cmsu
+SET choice=
+SET /p "choice=S(Save), L(List Updates), D(Discard Updates) : "
+IF /i '%choice%'=='L' goto ulist
+IF /i '%choice%'=='S' goto smsu
+IF /i '%choice%'=='D' goto dmsu
+goto cmsu
+:ulist
+powershell write-host -fore darkgray Pls, wait for listing...
+Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
+pause
+goto cmsu
+:smsu
+    dism /unmount-wim /mountdir:"%out%AIKMount" /commit
+:ufin
+If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
+powershell write-host -fore cyan Install.wim was unmounted '!'
 pause
 goto inf
 
