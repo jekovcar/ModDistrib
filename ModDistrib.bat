@@ -495,7 +495,7 @@ powershell write-host -fore darkgray Pls, wait for listing...
 Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 pause
 :msu
-powershell write-host -fore darkyellow IF NOT select dir packages',' image will Unmout.
+powershell write-host -fore darkyellow "IF NOT select DirPackages'('msu','cab'),' image will Unmout."
 set msu=
 set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
 for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "msu=%%I"
