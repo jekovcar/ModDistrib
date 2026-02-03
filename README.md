@@ -13,7 +13,7 @@
 <br>11.Detailed information about the imported install/boot WIM file index
 <br>12.Delete the distribution's boot WIM file index
 <br>13.Make Boot Iso from folder distribution
-<br>14.Bypass install restrictions
+<br>14.Bypass install hardware restrictions
 <br>15.Add package updates to image
 # Reference
 <p2>Function build ISO file [MSDN libr](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options?view=windows-11)
