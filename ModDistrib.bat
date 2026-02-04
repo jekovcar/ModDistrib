@@ -69,6 +69,7 @@ for /f "tokens=1,2 delims=," %%A in ('powershell -NoProfile -Command "Get-DiskIm
 if defined isoDrive (
 powershell -Command "Dismount-DiskImage -ImagePath '%isoPath%'" > nul
 powershell write-host -fore cyan Iso at drive %isoDrive%: was unmount.
+goto isp
 )
 powershell write-host -fore darkyellow 'Check/Unpack ' -NoNewline & pause
 
