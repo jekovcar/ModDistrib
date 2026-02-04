@@ -242,7 +242,7 @@ IF /i '%choice%'=='E' goto dex
 IF /i '%choice%'=='I' goto imp
 IF /i '%choice%'=='B' goto ibp
 IF /i '%choice%'=='D' goto ibd
-IF /i '%choice%'=='M' goto sel
+IF /i '%choice%'=='M' goto inf
 goto por
 
 :ibd
@@ -284,14 +284,24 @@ echo %ind% is NOT a digit.
 powershell write-host -fore yellow Choosed export index: %ind%
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim" /Index:%ind%
 for /f "delims=" %%i in ('powershell -command "(Get-WindowsImage -ImagePath '%Fullpath%\sources\install.wim' -Index %ind%).ImageName"') do set nameExp=%%i
-set destExp=
-set /p "nameExp=Enter Name for exported image(empty will '%nameExp%'): "
-If not "%nameExp%"=="" set destExp=/DestinationName:"%nameExp%"
-powershell write-host -fore yellow Export file will: install_%nameExp%_%ind%.wim
-pause
-if exist "%out%install%ind%.wim" DEL /S /Q "%out%install_%nameExp%_%ind%.wim"
+set destExp=/DestinationName:"%nameExp%"
+powershell write-host -fore yellow Cont. will: install_%nameExp%_%ind%.wim
+:ewch
+SET choice=
+SET /p "choice=Enter(cont.)/R(replace): "
+IF /i '%choice%'=='R' goto ewr
+IF /i '%choice%'=='' goto ewn
+goto ewch
+:ewn
+if exist "%out%install_%nameExp%_%ind%.wim" DEL /S /Q "%out%install_%nameExp%_%ind%.wim" > nul
 Dism /Export-Image /SourceImageFile:"%Fullpath%\sources\install.wim" /SourceIndex:%ind% /DestinationImageFile:"%out%install_%nameExp%_%ind%.wim" %destExp%
 dism /get-wiminfo /wimfile:"%out%install_%nameExp%_%ind%.wim"
+goto por
+:ewr
+if exist "%out%install_%nameExp%_%ind%.wim" DEL /S /Q "%out%install_%nameExp%_%ind%.wim" > nul
+Dism /Export-Image /SourceImageFile:"%Fullpath%\sources\install.wim" /SourceIndex:%ind% /DestinationImageFile:"%out%install_%nameExp%_%ind%.wim" %destExp%
+move "%out%install_%nameExp%_%ind%.wim" "%Fullpath%\sources\install.wim"
+dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
 goto por
 
 :ibp
