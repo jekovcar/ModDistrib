@@ -35,11 +35,12 @@ powershell Write-Host "-Ё§ў«ҐзҐ­ЁҐ'('ЎҐ§ Ё¬Ї®ав ')'/Ї®¤¬
 for /F %%I in ('powershell -Command "(Get-WindowsImage -Mounted).MountPath"') do set mountDir=%%I
 if defined mountDir (
     Powershell Get-WindowsImage -Mounted
-    powershell write-host -fore cyan "Unmount ImagePath in Path" -NoNewline & echo  : %mountDir%
+    powershell write-host -fore cyan "To Unmount ImagePath in Path" -NoNewline & echo  : %mountDir%
     pause
     dism /unmount-wim /mountdir:"%mountDir%" /discard
     If exist "%mountDir%" RMDIR /S /Q "%mountDir%"
     set mountDir=
+    dism /Cleanup-Mountpoints > nul
     cls
 goto code
 )
