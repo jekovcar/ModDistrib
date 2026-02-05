@@ -567,17 +567,17 @@ goto inf
 :bpres
 echo ----------Bypass-install restrictions-------------
 :bdex
-set ind=
-set /p "ind=Enter index: "
-if "%ind%"=="" echo Not Entered Value & pause & goto bdex
-if %ind% equ +%ind% (
-set ind=%ind%
-) else (
-echo %ind% is NOT a digit.
-    goto bdex
+set "TARGET=2"
+set "FOUND="
+for /f "tokens=1,2 delims=: " %%A in ('dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim" ^| findstr /i "Index"') do (
+    if /i "%%A"=="Index" if "%%B"=="%TARGET%" set FOUND=1
 )
+if not defined FOUND (
+powershell write-host -fore darkyellow Does NOT contain '''Microsoft Windows Setup''' to bypass
+    pause & goto inf
+) else (
 If not exist "%out%AIKMount" mkdir "%out%AIKMount"
-dism /mount-wim /wimfile:"%Fullpath%\sources\install.wim" /index:%ind% /mountdir:"%out%AIKMount"
+dism /mount-wim /wimfile:"%Fullpath%\sources\boot.wim" /index:2 /mountdir:"%out%AIKMount"
 powershell write-host -fore cyan Install.wim was mounted in %out%AIKMount '!'
 
 takeown /f "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" > nul & icacls "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" /grant Administrators:rx > nul
@@ -592,7 +592,8 @@ reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassCPUCheck /t REG_DWORD
 reg unload HKLM\WimRegistry && powershell write-host -fore darkgray Unload WimRegistry
 powershell write-host -fore yellow Install restictions was bypassed.
 dism /unmount-wim /mountdir:"%out%AIKMount" /commit
+)
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
-powershell write-host -fore cyan Install.wim was unmounted '!'
+powershell write-host -fore cyan boot.wim was unmounted '!'
 pause
 goto inf
