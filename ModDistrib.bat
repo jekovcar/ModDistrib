@@ -30,7 +30,7 @@ title  Core_distribution_modifier
 :code
 powershell Write-Host "ModDistrib" -Foregroundcolor White -BackgroundColor Blue -NoNewline 
 powershell Write-Host "-extract'('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
-powershell Write-Host "-Ё§ў«ҐзҐ­ЁҐ'('ЎҐ§ Ё¬Ї®ав ')'/Ї®¤¬Ґ­  kernel32.dll',' WimVers.reg ў Win10/11 ISO Ё«Ё а бЇ Є®ўЄҐ" -Foregroundcolor yellow -BackgroundColor darkBlue
+powershell Write-Host "Looks for mount points and clean them',' be patient." -Foregroundcolor darkgray
 
 for /F %%I in ('powershell -Command "(Get-WindowsImage -Mounted).MountPath"') do set mountDir=%%I
 if defined mountDir (
