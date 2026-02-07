@@ -30,12 +30,13 @@ title  Core_distribution_modifier
 :code
 powershell Write-Host "ModDistrib" -Foregroundcolor White -BackgroundColor Blue -NoNewline 
 powershell Write-Host "-extract'('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
-powershell Write-Host "Looks for mount points and clean them',' be patient." -Foregroundcolor darkgray
 
-for /F %%I in ('powershell -Command "(Get-WindowsImage -Mounted).MountPath"') do set mountDir=%%I
+for /f "tokens=2,*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\WimMount\Mounted Images" /s /v "Mount Path" 2^>nul ^| find "Mount Path"') do @if not exist "%%b" set "mountDir=%%b" & call set "mountDir=%%mountDir:REG_SZ    =%%"
+
 if defined mountDir (
     Powershell Get-WindowsImage -Mounted
     powershell write-host -fore cyan "To Unmount ImagePath in Path" -NoNewline & echo  : %mountDir%
+    powershell Write-Host "While unmounting and clean points',' be patient." -Foregroundcolor darkgray
     pause
     dism /unmount-wim /mountdir:"%mountDir%" /discard
     If exist "%mountDir%" RMDIR /S /Q "%mountDir%"
@@ -44,7 +45,6 @@ if defined mountDir (
     cls
 goto code
 )
-dism /cleanup-wim > nul
 powershell write-host -fore darkyellow "IF NOT select ISO', 'you can Enter path of unpacked distrib"
 :start
 set isoPath=
