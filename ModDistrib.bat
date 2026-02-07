@@ -28,16 +28,14 @@ if '%errorlevel%' NEQ '0' (
 title  Core_distribution_modifier
 @echo off
 :code
-powershell Write-Host "ModDistrib" -Foregroundcolor White -BackgroundColor Blue -NoNewline 
-powershell Write-Host "-extract'('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
-
+powershell Write-Host "ModDistrib-extract'('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
 for /f "tokens=2,*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\WimMount\Mounted Images" /s /v "Mount Path" 2^>nul ^| find "Mount Path"') do @if not exist "%%b" set "mountDir=%%b" & call set "mountDir=%%mountDir:REG_SZ    =%%"
 
 if defined mountDir (
     Powershell Get-WindowsImage -Mounted
     powershell write-host -fore cyan "To Unmount ImagePath in Path" -NoNewline & echo  : %mountDir%
-    powershell Write-Host "While unmounting and clean points',' be patient." -Foregroundcolor darkgray
     pause
+    powershell Write-Host "While unmounting and clean points',' be patient..." -Foregroundcolor darkgray
     dism /unmount-wim /mountdir:"%mountDir%" /discard
     If exist "%mountDir%" RMDIR /S /Q "%mountDir%"
     set mountDir=
@@ -68,6 +66,7 @@ echo Choosed "%isoPath%"
 set isoDrive=
 for /f "tokens=1,2 delims=," %%A in ('powershell -NoProfile -Command "Get-DiskImage -ImagePath '%isoPath%' | Get-Volume | Select-Object -ExpandProperty DriveLetter"') do set "isoDrive=%%A"
 if defined isoDrive (
+powershell Write-Host "Dismounting Iso..." -Foregroundcolor darkgray
 powershell -Command "Dismount-DiskImage -ImagePath '%isoPath%'" > nul
 powershell write-host -fore cyan Iso at drive %isoDrive%: was unmount.
 goto isp
@@ -84,12 +83,11 @@ If exist "%out%%isoName%" (
 echo Folder '%isoName%' already exist.
 goto fold
  )
-
+powershell write-host -fore darkgray Unpacking Iso...
 for /f %%L in ('powershell -Command "$free = ([char[]](67..90) | ? { -not (Get-PSDrive $_ -ErrorAction SilentlyContinue) })[0]; echo $free"') do set newLetter=%%L:
 
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 1 /f > nul
 powershell -Command "$mount = Mount-DiskImage -ImagePath '%isoPath%' -NoDriveLetter -PassThru; $volId = ($mount | Get-Volume).UniqueId; mountvol %newLetter% $volId"
-powershell write-host -fore darkgray Unpacking Iso to %out%%isoName%...
 If not exist "%out%%isoName%" mkdir "%out%%isoName%"
 robocopy %newLetter%\ "%out%%isoName%" /E /A-:SH > nul
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 0 /f > nul
