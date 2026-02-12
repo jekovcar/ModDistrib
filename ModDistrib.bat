@@ -528,14 +528,16 @@ powershell -NoLogo -NoProfile ^
 :: Loop through all .cab and .msu files
 for %%U in ("%msu%\*.cab" "%msu%\*.msu") do (
     if exist "%%~U" (
-        echo Adding update: %%~nxU
-        echo [INFO] Adding %%~nxU
+        echo.----------^>^>
+powershell write-host -fore darkgreen [INFO] Adding update: %%~nxU
 
         dism /image:"%out%AIKMount" /add-package /packagepath:"%%~U"
         if errorlevel 1 (
-            echo [ERROR] Failed to add %%~nxU
+powershell write-host -fore red [ERROR] Failed to add %%~nxU
+        ) else if errorlevel 0 (
+powershell write-host -fore magenta [OK] Successfully Added %%~nxU
         ) else (
-            echo [OK] Added %%~nxU
+echo End processed %%~nxU
         )
         echo.
     )
