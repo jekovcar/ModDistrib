@@ -515,34 +515,33 @@ echo NOT Choiced UpdatePackage to import
 dism /unmount-wim /mountdir:"%out%AIKMount" /discard
 goto ufin
 )
-echo You selected: %msu%
-setlocal enabledelayedexpansion
-echo Adding updates from "%msu%" to mounted image "%out%AIKMount"
 powershell write-host -fore yellow Choiced Packages in %msu% to import',' Pls wait...
-
+setlocal enabledelayedexpansion
 powershell -NoLogo -NoProfile ^
   "$acl = New-Object System.Security.AccessControl.DirectorySecurity;" ^
   "$acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule('Administrators','FullControl','ContainerInherit,ObjectInherit','None','Allow')));" ^
   "Set-Acl '%out%AIKMount' $acl"
-
+set /a suc=0
+set /a proc=0
 :: Loop through all .cab and .msu files
 for %%U in ("%msu%\*.cab" "%msu%\*.msu") do (
     if exist "%%~U" (
         echo.----------^>^>
 powershell write-host -fore darkgreen [INFO] Adding update: %%~nxU
-
+        set /a proc=proc+1
         dism /image:"%out%AIKMount" /add-package /packagepath:"%%~U"
-        if errorlevel 1 (
-powershell write-host -fore red [ERROR] Failed to add %%~nxU
-        ) else if errorlevel 0 (
+        if errorlevel 0 (
+        set /a suc=suc+1
 powershell write-host -fore magenta [OK] Successfully Added %%~nxU
         ) else (
-echo End processed %%~nxU
+        powershell write-host -fore red [ERROR] Failed to add %%~nxU
         )
+        echo End processed %%~nxU
         echo.
     )
 )
-powershell write-host -fore yellow All updates in %msu% processed.
+echo.......................................................
+powershell write-host -fore yellow 'Successfully Added' -nonewline & powershell write-host -fore magenta ' %suc% of' -nonewline & powershell write-host -fore darkgreen ' All %proc% updates processed.'
 endlocal
 :cmsu
 SET choice=
