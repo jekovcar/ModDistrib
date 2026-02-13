@@ -505,17 +505,16 @@ powershell write-host -fore darkgray Pls, wait for listing...
 Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 pause
 :msu
-powershell write-host -fore darkyellow "IF NOT select DirPackages'('msu','cab'),' image will Unmout."
 set msu=
 set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
 for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "msu=%%I"
 IF NOT DEFINED msu (
-echo NOT Choiced UpdatePackage to import
+powershell write-host -fore darkyellow NOT Choiced UpdatePackage to import & goto cmsu
 :dmsu
 dism /unmount-wim /mountdir:"%out%AIKMount" /discard
 goto ufin
 )
-powershell write-host -fore yellow Choiced Packages in %msu% to import',' Pls wait...
+powershell write-host -fore yellow Choiced %msu%',' Pls wait...
 setlocal enabledelayedexpansion
 powershell -NoLogo -NoProfile ^
   "$acl = New-Object System.Security.AccessControl.DirectorySecurity;" ^
@@ -541,17 +540,18 @@ powershell write-host -fore magenta [OK] Successfully Added %%~nxU
         echo.
     )
 )
-if %proc% EQU 0 powershell write-host -fore darkyellow "Selected DirPackages NOT contains Updates to import" & goto dmsu
+if %proc% EQU 0 powershell write-host -fore darkyellow "Selected DirPackages NOT contains Updates to import" & goto cmsu
 set /a sumf=proc-suc
 echo.......................................................
 powershell write-host -fore magenta 'Added successfully %suc%' -nonewline; write-host -fore red ',' failed %sumf% -nonewline; write-host -fore darkgreen ','of all %proc% updates processed.
 endlocal
 :cmsu
 SET choice=
-SET /p "choice=S(Save), L(List Updates), D(Discard Updates) : "
-IF /i '%choice%'=='L' goto ulist
+SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages) : "
 IF /i '%choice%'=='S' goto smsu
 IF /i '%choice%'=='D' goto dmsu
+IF /i '%choice%'=='L' goto ulist
+IF /i '%choice%'=='P' goto msu
 goto cmsu
 :ulist
 powershell write-host -fore darkgray Pls, wait for listing...
@@ -559,6 +559,7 @@ Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 goto cmsu
 :smsu
     dism /unmount-wim /mountdir:"%out%AIKMount" /commit
+powershell write-host -fore magenta Changes saved '!'
 :ufin
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan Install.wim was unmounted '!'
