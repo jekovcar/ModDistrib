@@ -523,6 +523,7 @@ powershell -NoLogo -NoProfile ^
   "Set-Acl '%out%AIKMount' $acl"
 set /a suc=0
 set /a proc=0
+set /a sumf=0
 :: Loop through all .cab and .msu files
 for %%U in ("%msu%\*.cab" "%msu%\*.msu") do (
     if exist "%%~U" (
@@ -540,8 +541,9 @@ powershell write-host -fore magenta [OK] Successfully Added %%~nxU
         echo.
     )
 )
+set /a sumf=proc-suc
 echo.......................................................
-powershell write-host -fore yellow 'Successfully Added' -nonewline & powershell write-host -fore magenta ' %suc% of' -nonewline & powershell write-host -fore darkgreen ' All %proc% updates processed.'
+powershell write-host -fore magenta 'Added successfully %suc%' -nonewline; write-host -fore red ',' failed %sumf% -nonewline; write-host -fore darkgreen ','of all %proc% updates processed.
 endlocal
 :cmsu
 SET choice=
