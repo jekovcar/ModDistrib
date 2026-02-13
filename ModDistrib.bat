@@ -531,11 +531,11 @@ for %%U in ("%msu%\*.cab" "%msu%\*.msu") do (
 powershell write-host -fore darkgreen [INFO] Adding update: %%~nxU
         set /a proc=proc+1
         dism /image:"%out%AIKMount" /add-package /packagepath:"%%~U"
-        if errorlevel 0 (
-        set /a suc=suc+1
-powershell write-host -fore magenta [OK] Successfully Added %%~nxU
+        if !errorlevel! neq 0 (
+         powershell write-host -fore red [ERROR] Failed to add %%~nxU
         ) else (
-        powershell write-host -fore red [ERROR] Failed to add %%~nxU
+                set /a suc=suc+1
+powershell write-host -fore magenta [OK] Successfully Added %%~nxU
         )
         echo End processed %%~nxU
         echo.
@@ -556,7 +556,6 @@ goto cmsu
 :ulist
 powershell write-host -fore darkgray Pls, wait for listing...
 Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
-pause
 goto cmsu
 :smsu
     dism /unmount-wim /mountdir:"%out%AIKMount" /commit
