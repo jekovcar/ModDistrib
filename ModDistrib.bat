@@ -541,6 +541,7 @@ powershell write-host -fore magenta [OK] Successfully Added %%~nxU
         echo.
     )
 )
+if %proc% EQU 0 powershell write-host -fore darkyellow "Selected DirPackages NOT contains Updates to import" & goto dmsu
 set /a sumf=proc-suc
 echo.......................................................
 powershell write-host -fore magenta 'Added successfully %suc%' -nonewline; write-host -fore red ',' failed %sumf% -nonewline; write-host -fore darkgreen ','of all %proc% updates processed.
