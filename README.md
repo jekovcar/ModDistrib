@@ -15,6 +15,7 @@
 <br>13.Make Boot Iso from folder distribution
 <br>14.Bypass install hardware restrictions
 <br>15.Add package updates to image
+<br>14.Bypass install automatic updates & Windows 11 Internet Requirement(NRO)
 # Reference
 <p2>Function build ISO file [MSDN libr](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options?view=windows-11)
 # Download
