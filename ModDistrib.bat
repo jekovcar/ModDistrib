@@ -167,10 +167,10 @@ dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
 :sel
 echo.--------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
-@echo Mount Distr(M),Exp/Imp/Boot Distr(E),Remove index Distr(R),Export ESD to WIM(S),Install Bypass(P)
-@echo Convert Wim to ESD(C), Details info Distr(I), Make Boot Iso(N), Add-PackageUpdate(U), To Start(B)?
+@echo Mount Distr(M),Exp/Imp/Boot Distr(E),Remove index Distr(R), Export ESD WIM(S), Bypass TPM(P)
+@echo Convert Wim ESD(C),Details info Distr(I),Make Iso(N),Add-PackUpdates(U),Bypass NRO(F),Back(B)?
 SET choice=
-SET /p choice=Pls, enter M/E/R/S/P/C/I/N/U/B: 
+SET /p choice=Pls, enter M/E/R/S/P/C/I/N/U/F/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
 IF /i '%choice%'=='M' goto ext
 IF /i '%choice%'=='E' goto por
@@ -181,6 +181,7 @@ IF /i '%choice%'=='I' goto det
 IF /i '%choice%'=='N' goto iso
 IF /i '%choice%'=='U' goto adpk
 IF /i '%choice%'=='P' goto bpres
+IF /i '%choice%'=='F' goto bpnro
 IF /i '%choice%'=='B' goto start
 goto sel
 
@@ -582,9 +583,11 @@ If not exist "%out%AIKMount" mkdir "%out%AIKMount"
 dism /mount-wim /wimfile:"%Fullpath%\sources\boot.wim" /index:2 /mountdir:"%out%AIKMount"
 powershell write-host -fore cyan Install.wim was mounted in %out%AIKMount '!'
 
-takeown /f "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" > nul & icacls "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" /grant Administrators:rx > nul
-if exist "%out%AIKMount\windows\system32\WebThreatDefSvc" takeown /f "%out%AIKMount\windows\system32\WebThreatDefSvc" > nul & icacls "%out%AIKMount\windows\system32\WebThreatDefSvc" /grant Administrators:rx > nul
-takeown /f "%out%AIKMount\windows\system32\config\SYSTEM" > nul & icacls "%out%AIKMount\windows\system32\config\SYSTEM" /grant Administrators:F /t > nul
+takeown /f "%out%AIKMount\windows\system32\config\software" > nul & icacls "%out%AIKMount\windows\system32\config\software" /grant Administrators:F /t > nul
+reg load HKLM\WimRegistry "%out%AIKMount\windows\system32\config\software"
+powershell write-host -fore darkgray .....................................
+Echo Registry was loaded WimRegistry !
+reg add "HKLM\WimRegistry\Microsoft\Windows\CurrentVersion\OOBE" /v BypassNRO /t REG_DWORD /d 1 /f
 
 reg load HKLM\WimRegistry "%out%AIKMount\windows\system32\config\system" && powershell write-host -fore darkgray Load WimRegistry
 reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassTPMCheck /t REG_DWORD /d 1 /f && powershell write-host -fore green BypassTPMCheck
@@ -595,6 +598,39 @@ reg unload HKLM\WimRegistry && powershell write-host -fore darkgray Unload WimRe
 powershell write-host -fore yellow Install restictions was bypassed.
 dism /unmount-wim /mountdir:"%out%AIKMount" /commit
 )
+If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
+powershell write-host -fore cyan boot.wim was unmounted '!'
+pause
+goto inf
+
+:bpnro
+echo ----------Bypass-install Internet Requirement-------------
+:ndex
+set ind=
+set /p "ind=Enter index: "
+if "%ind%"=="" echo Not Entered Value & pause & goto ndex
+if %ind% equ +%ind% (
+set ind=%ind%
+) else (
+echo %ind% is NOT a digit.
+    goto ndex
+)
+
+If not exist "%out%AIKMount" mkdir "%out%AIKMount"
+dism /mount-wim /wimfile:"%Fullpath%\sources\install.wim" /index:%ind% /mountdir:"%out%AIKMount"
+powershell write-host -fore cyan Install.wim was mounted in %out%AIKMount '!'
+
+takeown /f "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" > nul & icacls "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" /grant Administrators:rx > nul
+if exist "%out%AIKMount\windows\system32\WebThreatDefSvc" takeown /f "%out%AIKMount\windows\system32\WebThreatDefSvc" > nul & icacls "%out%AIKMount\windows\system32\WebThreatDefSvc" /grant Administrators:rx > nul
+takeown /f "%out%AIKMount\windows\system32\config\software" > nul & icacls "%out%AIKMount\windows\system32\config\software" /grant Administrators:F /t > nul
+reg load HKLM\WimRegistry "%out%AIKMount\windows\system32\config\software"
+powershell write-host -fore darkgray .....................................
+powershell write-host -fore darkgray Load WimRegistry !
+reg add "HKLM\WimRegistry\Microsoft\Windows\CurrentVersion\OOBE" /v BypassNRO /t REG_DWORD /d 1 /f && powershell write-host -fore green Bypass No Wi-Fi
+reg add "HKLM\WimRegistry\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoUpdate /t REG_DWORD /d 1 /f && powershell write-host -fore green Bypass No AutoUpdate
+reg unload HKLM\WimRegistry && powershell write-host -fore darkgray Unload WimRegistry
+powershell write-host -fore yellow Install restictions was bypassed.
+dism /unmount-wim /mountdir:"%out%AIKMount" /commit
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan boot.wim was unmounted '!'
 pause
