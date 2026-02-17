@@ -14,7 +14,7 @@
 <br>12.Delete the distribution's boot WIM file index
 <br>13.Make Boot Iso from folder distribution
 <br>14.Bypass install hardware restrictions (TPM)
-<br>15.Bypass install automatic updates & Windows 11 Internet Requirement (NRO)
+<br>15.Bypass install automatic updates, enable local account & Windows 11 Internet Requirement (NRO)
 <br>16.Add package updates to image
 # Reference
 <p2>Function build ISO file [MSDN libr](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options?view=windows-11)
