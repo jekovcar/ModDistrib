@@ -167,8 +167,8 @@ dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
 :sel
 echo.--------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
-@echo Mount Distr(M),Exp/Imp/Boot Distr(E),Remove index Distr(R), Export ESD WIM(S), Bypass TPM(P)
-@echo Convert Wim ESD(C),Details info Distr(I),Make Iso(N),Add-PackUpdates(U),Bypass NRO(F),Back(B)?
+@echo Mount Distr(M),Exp/Imp/Boot Distr(E),Remove index Distr(R), Export ESD^>WIM(S), Bypass TPM(P)
+@echo Convert Wim^>ESD(C),Details info Distr(I),Make Iso(N),Add-PackUpdates(U),Bypass NRO(F),Back(B)?
 SET choice=
 SET /p choice=Pls, enter M/E/R/S/P/C/I/N/U/F/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
@@ -568,7 +568,7 @@ pause
 goto inf
 
 :bpres
-echo ----------Bypass-install restrictions-------------
+echo ----------Bypass-install requirements-------------
 :bdex
 set "TARGET=2"
 set "FOUND="
@@ -595,7 +595,7 @@ reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassSecureBootCheck /t RE
 reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassRAMCheck /t REG_DWORD /d 1 /f && powershell write-host -fore green BypassRAMCheck
 reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassCPUCheck /t REG_DWORD /d 1 /f && powershell write-host -fore green BypassCPUCheck
 reg unload HKLM\WimRegistry && powershell write-host -fore darkgray Unload WimRegistry
-powershell write-host -fore yellow Install restictions was bypassed.
+powershell write-host -fore yellow Install requirements was bypassed.
 dism /unmount-wim /mountdir:"%out%AIKMount" /commit
 )
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
@@ -627,6 +627,8 @@ reg load HKLM\WimRegistry "%out%AIKMount\windows\system32\config\software"
 powershell write-host -fore darkgray .....................................
 powershell write-host -fore darkgray Load WimRegistry !
 reg add "HKLM\WimRegistry\Microsoft\Windows\CurrentVersion\OOBE" /v BypassNRO /t REG_DWORD /d 1 /f && powershell write-host -fore green Bypass No Wi-Fi
+reg add "HKLM\WimRegistry\Microsoft\Windows\CurrentVersion\OOBE" /v "BypassNROGatherOptions" /t REG_DWORD /d "1" /f && powershell write-host -fore green Bypass local Account
+reg add "HKLM\WimRegistry\Policies\Microsoft\Windows\OOBE" /v "DisablePrivacyExperience" /t REG_DWORD /d "1" /f&& powershell write-host -fore green Enable Local Account Creation
 reg add "HKLM\WimRegistry\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoUpdate /t REG_DWORD /d 1 /f && powershell write-host -fore green Bypass No AutoUpdate
 reg unload HKLM\WimRegistry && powershell write-host -fore darkgray Unload WimRegistry
 powershell write-host -fore yellow Install restictions was bypassed.
