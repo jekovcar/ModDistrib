@@ -583,17 +583,17 @@ If not exist "%out%AIKMount" mkdir "%out%AIKMount"
 dism /mount-wim /wimfile:"%Fullpath%\sources\boot.wim" /index:2 /mountdir:"%out%AIKMount"
 powershell write-host -fore cyan Install.wim was mounted in %out%AIKMount '!'
 
-takeown /f "%out%AIKMount\windows\system32\config\software" > nul & icacls "%out%AIKMount\windows\system32\config\software" /grant Administrators:F /t > nul
-reg load HKLM\WimRegistry "%out%AIKMount\windows\system32\config\software"
+takeown /f "%out%AIKMount\windows\system32\config\system" > nul & icacls "%out%AIKMount\windows\system32\config\system" /grant Administrators:F /t > nul
 powershell write-host -fore darkgray .....................................
-Echo Registry was loaded WimRegistry !
-reg add "HKLM\WimRegistry\Microsoft\Windows\CurrentVersion\OOBE" /v BypassNRO /t REG_DWORD /d 1 /f
-
 reg load HKLM\WimRegistry "%out%AIKMount\windows\system32\config\system" && powershell write-host -fore darkgray Load WimRegistry
+
 reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassTPMCheck /t REG_DWORD /d 1 /f && powershell write-host -fore green BypassTPMCheck
 reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassSecureBootCheck /t REG_DWORD /d 1 /f && powershell write-host -fore green BypassSecureBootCheck
 reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassRAMCheck /t REG_DWORD /d 1 /f && powershell write-host -fore green BypassRAMCheck
 reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v BypassCPUCheck /t REG_DWORD /d 1 /f && powershell write-host -fore green BypassCPUCheck
+reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v "BypassDiskCheck" /t REG_DWORD /d "1" /f && powershell write-host -fore green BypassDiskCheck
+reg add "HKLM\WimRegistry\SYSTEM\Setup\LabConfig" /v "BypassStorageCheck" /t REG_DWORD /d "1" /f && powershell write-host -fore green BypassStorageCheck
+
 reg unload HKLM\WimRegistry && powershell write-host -fore darkgray Unload WimRegistry
 powershell write-host -fore yellow Install requirements was bypassed.
 dism /unmount-wim /mountdir:"%out%AIKMount" /commit
@@ -620,16 +620,15 @@ If not exist "%out%AIKMount" mkdir "%out%AIKMount"
 dism /mount-wim /wimfile:"%Fullpath%\sources\install.wim" /index:%ind% /mountdir:"%out%AIKMount"
 powershell write-host -fore cyan Install.wim was mounted in %out%AIKMount '!'
 
-takeown /f "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" > nul & icacls "%out%AIKMount\windows\system32\LogFiles\WMI\RtBackup" /grant Administrators:rx > nul
-if exist "%out%AIKMount\windows\system32\WebThreatDefSvc" takeown /f "%out%AIKMount\windows\system32\WebThreatDefSvc" > nul & icacls "%out%AIKMount\windows\system32\WebThreatDefSvc" /grant Administrators:rx > nul
 takeown /f "%out%AIKMount\windows\system32\config\software" > nul & icacls "%out%AIKMount\windows\system32\config\software" /grant Administrators:F /t > nul
-reg load HKLM\WimRegistry "%out%AIKMount\windows\system32\config\software"
 powershell write-host -fore darkgray .....................................
-powershell write-host -fore darkgray Load WimRegistry !
+reg load HKLM\WimRegistry "%out%AIKMount\windows\system32\config\software" && powershell write-host -fore darkgray Load WimRegistry
+
 reg add "HKLM\WimRegistry\Microsoft\Windows\CurrentVersion\OOBE" /v BypassNRO /t REG_DWORD /d 1 /f && powershell write-host -fore green Bypass No Wi-Fi
 reg add "HKLM\WimRegistry\Microsoft\Windows\CurrentVersion\OOBE" /v "BypassNROGatherOptions" /t REG_DWORD /d "1" /f && powershell write-host -fore green Bypass local Account
 reg add "HKLM\WimRegistry\Policies\Microsoft\Windows\OOBE" /v "DisablePrivacyExperience" /t REG_DWORD /d "1" /f&& powershell write-host -fore green Enable Local Account Creation
 reg add "HKLM\WimRegistry\Policies\Microsoft\Windows\WindowsUpdate\AU" /v NoAutoUpdate /t REG_DWORD /d 1 /f && powershell write-host -fore green Bypass No AutoUpdate
+
 reg unload HKLM\WimRegistry && powershell write-host -fore darkgray Unload WimRegistry
 powershell write-host -fore yellow Install restictions was bypassed.
 dism /unmount-wim /mountdir:"%out%AIKMount" /commit
