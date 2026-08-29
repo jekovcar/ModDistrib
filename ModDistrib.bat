@@ -28,7 +28,7 @@ if '%errorlevel%' NEQ '0' (
 title  Core_distribution_modifier
 @echo off
 :code
-powershell Write-Host "ModDistrib-extract'('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
+powershell Write-Host "ModDistrib-extract v0.2'('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
 for /f "tokens=2,*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\WimMount\Mounted Images" /s /v "Mount Path" 2^>nul ^| find "Mount Path"') do @if not exist "%%b" set "mountDir=%%b" & call set "mountDir=%%mountDir:REG_SZ    =%%"
 
 if defined mountDir (
@@ -164,24 +164,29 @@ powershell write-host -fore yellow WIM to ESD  of Index:%sein% was converted ! &
 if exist "%Fullpath%\sources\install.esd" echo --------------------ESD Info------------------------------ & dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.esd"
 echo.--------------------Wim Info------------------------------
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
+::dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim"
+powershell -Command "dism /get-wiminfo /wimfile:'%Fullpath%\sources\boot.wim' | ForEach-Object { if ($_ -match 'Index\s*:\s*\d+') { Write-Host $_ -ForegroundColor Cyan } elseif ($_ -match 'Name\s*:') { Write-Host $_ -ForegroundColor Green } elseif ($_ -match 'Size\s*:') { Write-Host $_ -ForegroundColor Yellow } else { Write-Host $_ } }"
+
+
 :sel
 echo.--------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
-@echo Mount Distr(M),Exp/Imp/Boot Distr(E),Remove index Distr(R), Export ESD^>WIM(S), Bypass TPM(P)
-@echo Convert Wim^>ESD(C),Details info Distr(I),Make Iso(N),Add-PackUpdates(U),Bypass NRO(F),Back(B)?
+@echo Mount Distr(M),Exp/Imp/Boot Distr(E),Remove index Distr(R),Export ESD^>WIM(S),BypassTPM(P),BypassNRO(F)
+@echo Convert Wim^>ESD(C),Details info Distr(I),Make Iso(N),AddPackInstall(U),AddPackBoot(W),Back(B)?
 SET choice=
-SET /p choice=Pls, enter M/E/R/S/P/C/I/N/U/F/B: 
+SET /p choice=Pls, enter M/E/R/S/P/F/C/I/N/U/W/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
 IF /i '%choice%'=='M' goto ext
 IF /i '%choice%'=='E' goto por
 IF /i '%choice%'=='R' goto del
 IF /i '%choice%'=='S' goto esd
+IF /i '%choice%'=='P' goto bpres
+IF /i '%choice%'=='F' goto bpnro
 IF /i '%choice%'=='C' goto con
 IF /i '%choice%'=='I' goto det
 IF /i '%choice%'=='N' goto iso
 IF /i '%choice%'=='U' goto adpk
-IF /i '%choice%'=='P' goto bpres
-IF /i '%choice%'=='F' goto bpnro
+IF /i '%choice%'=='W' goto adpkr
 IF /i '%choice%'=='B' goto start
 goto sel
 
@@ -481,7 +486,7 @@ echo (After restoring, recommended to export for reduce)
 pause
 goto inf
 :adpk
-echo ----------Add-Package to image-------------
+echo ----------Add-Package to install.wim-------------
 :pdex
 set ind=
 set /p "ind=Enter index: "
@@ -504,8 +509,9 @@ goto lmsu
 :list
 powershell write-host -fore darkgray Pls, wait for listing...
 Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
-pause
 :msu
+powershell write-host -fore yellow Pls, Choose packages folder for update
+pause
 set msu=
 set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
 for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "msu=%%I"
@@ -564,6 +570,94 @@ powershell write-host -fore magenta Changes saved '!'
 :ufin
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan Install.wim was unmounted '!'
+pause
+goto inf
+
+:adpkr
+echo ----------Add-Package to boot.wim-------------
+:pdexr
+set indr=
+set /p "indr=Enter index: "
+if "%indr%"=="" echo Not Entered Value & pause & goto pdexr
+if %indr% equ +%indr% (
+set ind=%indr%
+) else (
+echo %ind% is NOT a digit.
+    goto pdexr
+)
+If not exist "%out%AIKMount" mkdir "%out%AIKMount"
+dism /mount-wim /wimfile:"%Fullpath%\sources\boot.wim" /index:%ind% /mountdir:"%out%AIKMount"
+powershell write-host -fore cyan boot.wim was mounted in %out%AIKMount '!'
+:lmsur
+SET choice=
+SET /p "choice=Enter(cont.)/L(List Updates): "
+IF /i '%choice%'=='L' goto listr
+IF /i '%choice%'=='' goto msur
+goto lmsur
+:listr
+powershell write-host -fore darkgray Pls, wait for listing...
+Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
+:msur
+powershell write-host -fore yellow Pls, Choose packages folder for update
+pause
+set msur=
+set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
+for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "msur=%%I"
+IF NOT DEFINED msur (
+powershell write-host -fore darkyellow NOT Choiced UpdatePackage to import & goto cmsu
+:dmsur
+dism /unmount-wim /mountdir:"%out%AIKMount" /discard
+goto ufinr
+)
+powershell write-host -fore yellow Choiced %msur%',' Pls wait...
+setlocal enabledelayedexpansion
+powershell -NoLogo -NoProfile ^
+  "$acl = New-Object System.Security.AccessControl.DirectorySecurity;" ^
+  "$acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule('Administrators','FullControl','ContainerInherit,ObjectInherit','None','Allow')));" ^
+  "Set-Acl '%out%AIKMount' $acl"
+set /a suc=0
+set /a proc=0
+set /a sumf=0
+:: Loop through all .cab and .msu files
+for %%U in ("%msur%\*.cab" "%msur%\*.msu") do (
+    if exist "%%~U" (
+        echo.----------^>^>
+powershell write-host -fore darkgreen [INFO] Adding update: %%~nxU
+        set /a proc=proc+1
+        dism /image:"%out%AIKMount" /add-package /packagepath:"%%~U"
+        if !errorlevel! neq 0 (
+         powershell write-host -fore red [ERROR] Failed to add %%~nxU
+        ) else (
+                set /a suc=suc+1
+powershell write-host -fore magenta [OK] Successfully Added %%~nxU
+        )
+        echo End processed %%~nxU
+        echo.
+    )
+)
+if %proc% EQU 0 powershell write-host -fore darkyellow "Selected DirPackages NOT contains Updates to import" & goto cmsu
+set /a sumf=proc-suc
+echo.......................................................
+powershell write-host -fore magenta 'Added successfully %suc%' -nonewline; write-host -fore red ',' failed %sumf% -nonewline; write-host -fore darkgreen ','of all %proc% updates processed.
+endlocal
+:cmsur
+SET choice=
+SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages) : "
+IF /i '%choice%'=='S' goto smsur
+IF /i '%choice%'=='D' goto dmsur
+IF /i '%choice%'=='L' goto ulistr
+IF /i '%choice%'=='P' goto msur
+goto cmsur
+:ulistr
+powershell write-host -fore darkgray Pls, wait for listing...
+Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
+goto cmsur
+:smsur
+    dism /unmount-wim /mountdir:"%out%AIKMount" /commit
+powershell write-host -fore magenta Changes saved '!'
+:ufinr
+If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
+powershell write-host -fore cyan boot.wim was unmounted '!'
 pause
 goto inf
 
