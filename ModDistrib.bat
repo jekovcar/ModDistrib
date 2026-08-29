@@ -172,7 +172,7 @@ powershell -Command "dism /get-wiminfo /wimfile:'%Fullpath%\sources\boot.wim' | 
 echo.--------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
 @echo Mount Distr(M),Exp/Imp/Boot Distr(E),Remove index Distr(R),Export ESD^>WIM(S),BypassTPM(P),BypassNRO(F)
-@echo Convert Wim^>ESD(C),Details info Distr(I),Make Iso(N),AddPackInstall(U),AddPackBoot(W),Back(B)?
+@echo Convert Wim^>ESD(C),Details info Distr(I),Make Iso(N),AddPack to Install(U),AddPack to Boot(W),Back(B)?
 SET choice=
 SET /p choice=Pls, enter M/E/R/S/P/F/C/I/N/U/W/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
@@ -489,7 +489,7 @@ goto inf
 echo ----------Add-Package to install.wim-------------
 :pdex
 set ind=
-set /p "ind=Enter index: "
+set /p "ind=Enter index of install.wim: "
 if "%ind%"=="" echo Not Entered Value & pause & goto pdex
 if %ind% equ +%ind% (
 set ind=%ind%
@@ -577,7 +577,7 @@ goto inf
 echo ----------Add-Package to boot.wim-------------
 :pdexr
 set indr=
-set /p "indr=Enter index: "
+set /p "indr=Enter index of boot.wim: "
 if "%indr%"=="" echo Not Entered Value & pause & goto pdexr
 if %indr% equ +%indr% (
 set ind=%indr%
@@ -604,7 +604,7 @@ set msur=
 set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
 for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "msur=%%I"
 IF NOT DEFINED msur (
-powershell write-host -fore darkyellow NOT Choiced UpdatePackage to import & goto cmsu
+powershell write-host -fore darkyellow NOT Choiced UpdatePackage to import & goto cmsur
 :dmsur
 dism /unmount-wim /mountdir:"%out%AIKMount" /discard
 goto ufinr
@@ -635,7 +635,7 @@ powershell write-host -fore magenta [OK] Successfully Added %%~nxU
         echo.
     )
 )
-if %proc% EQU 0 powershell write-host -fore darkyellow "Selected DirPackages NOT contains Updates to import" & goto cmsu
+if %proc% EQU 0 powershell write-host -fore darkyellow "Selected DirPackages NOT contains Updates to import" & goto cmsur
 set /a sumf=proc-suc
 echo.......................................................
 powershell write-host -fore magenta 'Added successfully %suc%' -nonewline; write-host -fore red ',' failed %sumf% -nonewline; write-host -fore darkgreen ','of all %proc% updates processed.
