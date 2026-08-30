@@ -498,18 +498,30 @@ set ind=%ind%
 echo %ind% is NOT a digit.
     goto pdex
 )
-If not exist "%out%AIKMount" mkdir "%out%AIKMount"
-dism /mount-wim /wimfile:"%Fullpath%\sources\install.wim" /index:%ind% /mountdir:"%out%AIKMount"
+
+dism /Get-ImageInfo /ImageFile:"%Fullpath%\sources\Install.wim" /Index:%ind% >nul 2>&1
+if %errorlevel% equ 0 (
+    If not exist "%out%AIKMount" mkdir "%out%AIKMount"
+    dism /mount-wim /wimfile:"%Fullpath%\sources\Install.wim" /index:%ind% /mountdir:"%out%AIKMount"
+) else (
+    powershell write-host -fore red Entered Index':'%ind% does not exist in the specified image file.
+    echo To enter other Index
+    pause
+    goto pdex
+)
+
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim" /Index:%ind%
 powershell write-host -fore cyan Install.wim index':'%ind% was mounted in %out%AIKMount '!'
 :cmsu
 echo.
+SET "othi=0"
 SET choice=
-SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages) : "
+SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages), I(Add packages to other index)  : "
 IF /i '%choice%'=='S' goto smsu
 IF /i '%choice%'=='D' goto dmsu
 IF /i '%choice%'=='L' goto list
 IF /i '%choice%'=='P' goto msu
+IF /i '%choice%'=='I' SET "othi=1" & goto smsu
 goto cmsu
 :list
 powershell write-host -fore darkgray Pls, wait for listing...
@@ -566,6 +578,7 @@ powershell write-host -fore magenta Changes saved '!'
 :ufin
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan Install.wim was unmounted '!'
+If "%othi%"=="1" goto pdex
 pause
 goto inf
 
@@ -581,18 +594,30 @@ set ind=%ind%
 echo %ind% is NOT a digit.
     goto pdexr
 )
-If not exist "%out%AIKMount" mkdir "%out%AIKMount"
-dism /mount-wim /wimfile:"%Fullpath%\sources\boot.wim" /index:%ind% /mountdir:"%out%AIKMount"
+
+dism /Get-ImageInfo /ImageFile:"%Fullpath%\sources\boot.wim" /Index:%ind% >nul 2>&1
+if %errorlevel% equ 0 (
+    If not exist "%out%AIKMount" mkdir "%out%AIKMount"
+    dism /mount-wim /wimfile:"%Fullpath%\sources\boot.wim" /index:%ind% /mountdir:"%out%AIKMount"
+) else (
+    powershell write-host -fore red Entered Index':'%ind% does not exist in the specified image file.
+    echo To enter other Index
+    pause
+    goto pdexr
+)
+
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim" /Index:%ind%
 powershell write-host -fore cyan boot.wim index':'%ind% was mounted in %out%AIKMount '!'
 :cmsur
 echo.
+SET "othi=0"
 SET choice=
-SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages) : "
+SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages), I(Add packages to other index)  : "
 IF /i '%choice%'=='S' goto smsur
 IF /i '%choice%'=='D' goto dmsur
 IF /i '%choice%'=='L' goto listr
 IF /i '%choice%'=='P' goto msur
+IF /i '%choice%'=='I' SET "othi=1" & goto smsur
 goto cmsur
 :listr
 powershell write-host -fore darkgray Pls, wait for listing...
@@ -649,6 +674,7 @@ powershell write-host -fore magenta Changes saved '!'
 :ufinr
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan boot.wim was unmounted '!'
+If "%othi%"=="1" goto pdexr
 pause
 goto inf
 
