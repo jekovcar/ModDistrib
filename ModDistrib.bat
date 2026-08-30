@@ -485,6 +485,7 @@ powershell write-host -fore green Close or Edit *supported* WIM','after this',' 
 echo (After restoring, recommended to export for reduce)
 pause
 goto inf
+
 :adpk
 echo ----------Add-Package to install.wim-------------
 :pdex
@@ -499,16 +500,22 @@ echo %ind% is NOT a digit.
 )
 If not exist "%out%AIKMount" mkdir "%out%AIKMount"
 dism /mount-wim /wimfile:"%Fullpath%\sources\install.wim" /index:%ind% /mountdir:"%out%AIKMount"
-powershell write-host -fore cyan Install.wim was mounted in %out%AIKMount '!'
-:lmsu
+dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim" /Index:%ind%
+powershell write-host -fore cyan Install.wim index':'%ind% was mounted in %out%AIKMount '!'
+:cmsu
+echo.
 SET choice=
-SET /p "choice=Enter(cont.)/L(List Updates): "
+SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages) : "
+IF /i '%choice%'=='S' goto smsu
+IF /i '%choice%'=='D' goto dmsu
 IF /i '%choice%'=='L' goto list
-IF /i '%choice%'=='' goto msu
-goto lmsu
+IF /i '%choice%'=='P' goto msu
+goto cmsu
 :list
 powershell write-host -fore darkgray Pls, wait for listing...
 Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
+pause
+goto cmsu
 :msu
 powershell write-host -fore yellow Pls, Choose packages folder for update
 pause
@@ -552,17 +559,6 @@ set /a sumf=proc-suc
 echo.......................................................
 powershell write-host -fore magenta 'Added successfully %suc%' -nonewline; write-host -fore red ',' failed %sumf% -nonewline; write-host -fore darkgreen ','of all %proc% updates processed.
 endlocal
-:cmsu
-SET choice=
-SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages) : "
-IF /i '%choice%'=='S' goto smsu
-IF /i '%choice%'=='D' goto dmsu
-IF /i '%choice%'=='L' goto ulist
-IF /i '%choice%'=='P' goto msu
-goto cmsu
-:ulist
-powershell write-host -fore darkgray Pls, wait for listing...
-Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 goto cmsu
 :smsu
     dism /unmount-wim /mountdir:"%out%AIKMount" /commit
@@ -587,16 +583,22 @@ echo %ind% is NOT a digit.
 )
 If not exist "%out%AIKMount" mkdir "%out%AIKMount"
 dism /mount-wim /wimfile:"%Fullpath%\sources\boot.wim" /index:%ind% /mountdir:"%out%AIKMount"
-powershell write-host -fore cyan boot.wim was mounted in %out%AIKMount '!'
-:lmsur
+dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim" /Index:%ind%
+powershell write-host -fore cyan boot.wim index':'%ind% was mounted in %out%AIKMount '!'
+:cmsur
+echo.
 SET choice=
-SET /p "choice=Enter(cont.)/L(List Updates): "
+SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages) : "
+IF /i '%choice%'=='S' goto smsur
+IF /i '%choice%'=='D' goto dmsur
 IF /i '%choice%'=='L' goto listr
-IF /i '%choice%'=='' goto msur
-goto lmsur
+IF /i '%choice%'=='P' goto msur
+goto cmsur
 :listr
 powershell write-host -fore darkgray Pls, wait for listing...
 Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
+pause
+goto cmsur
 :msur
 powershell write-host -fore yellow Pls, Choose packages folder for update
 pause
@@ -640,17 +642,6 @@ set /a sumf=proc-suc
 echo.......................................................
 powershell write-host -fore magenta 'Added successfully %suc%' -nonewline; write-host -fore red ',' failed %sumf% -nonewline; write-host -fore darkgreen ','of all %proc% updates processed.
 endlocal
-:cmsur
-SET choice=
-SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages) : "
-IF /i '%choice%'=='S' goto smsur
-IF /i '%choice%'=='D' goto dmsur
-IF /i '%choice%'=='L' goto ulistr
-IF /i '%choice%'=='P' goto msur
-goto cmsur
-:ulistr
-powershell write-host -fore darkgray Pls, wait for listing...
-Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 goto cmsur
 :smsur
     dism /unmount-wim /mountdir:"%out%AIKMount" /commit
