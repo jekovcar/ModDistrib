@@ -576,11 +576,11 @@ goto inf
 :adpkr
 echo ----------Add-Package to boot.wim-------------
 :pdexr
-set indr=
-set /p "indr=Enter index of boot.wim: "
-if "%indr%"=="" echo Not Entered Value & pause & goto pdexr
-if %indr% equ +%indr% (
-set ind=%indr%
+set ind=
+set /p "ind=Enter index of boot.wim: "
+if "%ind%"=="" echo Not Entered Value & pause & goto pdexr
+if %ind% equ +%ind% (
+set ind=%ind%
 ) else (
 echo %ind% is NOT a digit.
     goto pdexr
@@ -600,16 +600,16 @@ Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 :msur
 powershell write-host -fore yellow Pls, Choose packages folder for update
 pause
-set msur=
+set msu=
 set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
-for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "msur=%%I"
-IF NOT DEFINED msur (
+for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "msu=%%I"
+IF NOT DEFINED msu (
 powershell write-host -fore darkyellow NOT Choiced UpdatePackage to import & goto cmsur
 :dmsur
 dism /unmount-wim /mountdir:"%out%AIKMount" /discard
 goto ufinr
 )
-powershell write-host -fore yellow Choiced %msur%',' Pls wait...
+powershell write-host -fore yellow Choiced %msu%',' Pls wait...
 setlocal enabledelayedexpansion
 powershell -NoLogo -NoProfile ^
   "$acl = New-Object System.Security.AccessControl.DirectorySecurity;" ^
@@ -619,7 +619,7 @@ set /a suc=0
 set /a proc=0
 set /a sumf=0
 :: Loop through all .cab and .msu files
-for %%U in ("%msur%\*.cab" "%msur%\*.msu") do (
+for %%U in ("%msu%\*.cab" "%msu%\*.msu") do (
     if exist "%%~U" (
         echo.----------^>^>
 powershell write-host -fore darkgreen [INFO] Adding update: %%~nxU
