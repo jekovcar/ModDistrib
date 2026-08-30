@@ -186,7 +186,7 @@ IF /i '%choice%'=='C' goto con
 IF /i '%choice%'=='I' goto det
 IF /i '%choice%'=='N' goto iso
 IF /i '%choice%'=='U' goto adpk
-IF /i '%choice%'=='W' goto adpkr
+IF /i '%choice%'=='W' goto \
 IF /i '%choice%'=='B' goto start
 goto sel
 
@@ -488,6 +488,7 @@ goto inf
 
 :adpk
 echo ----------Add-Package to install.wim-------------
+set msu=
 :pdex
 set ind=
 set /p "ind=Enter index of install.wim: "
@@ -512,11 +513,12 @@ if %errorlevel% equ 0 (
 
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim" /Index:%ind%
 powershell write-host -fore cyan Install.wim index':'%ind% was mounted in %out%AIKMount '!'
+If "%othi%"=="1" goto :msu
 :cmsu
 echo.
 SET "othi=0"
 SET choice=
-SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages), I(Add packages to other index)  : "
+SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages), I(Add selected packages to other index)  : "
 IF /i '%choice%'=='S' goto smsu
 IF /i '%choice%'=='D' goto dmsu
 IF /i '%choice%'=='L' goto list
@@ -529,18 +531,20 @@ Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 pause
 goto cmsu
 :msu
-powershell write-host -fore yellow Pls, Choose packages folder for update
+If "%othi%"=="1" if not "%msu%"=="" goto :omsu
+powershell write-host -fore yellow Pls, Choose UpdPackages folder for update
 pause
 set msu=
 set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
 for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "msu=%%I"
 IF NOT DEFINED msu (
-powershell write-host -fore darkyellow NOT Choiced UpdatePackage to import & goto cmsu
+powershell write-host -fore darkyellow NOT Choiced UpdPackages Dir to import & goto cmsu
 :dmsu
 dism /unmount-wim /mountdir:"%out%AIKMount" /discard
 goto ufin
 )
-powershell write-host -fore yellow Choiced %msu%',' Pls wait...
+:omsu
+powershell write-host -fore yellow Choiced UpdPakages folder %msu%',' Pls wait...
 setlocal enabledelayedexpansion
 powershell -NoLogo -NoProfile ^
   "$acl = New-Object System.Security.AccessControl.DirectorySecurity;" ^
@@ -566,7 +570,7 @@ powershell write-host -fore magenta [OK] Successfully Added %%~nxU
         echo.
     )
 )
-if %proc% EQU 0 powershell write-host -fore darkyellow "Selected DirPackages NOT contains Updates to import" & goto cmsu
+if %proc% EQU 0 powershell write-host -fore darkyellow "Selected Packages Dir NOT contains Updates to import" & goto cmsu
 set /a sumf=proc-suc
 echo.......................................................
 powershell write-host -fore magenta 'Added successfully %suc%' -nonewline; write-host -fore red ',' failed %sumf% -nonewline; write-host -fore darkgreen ','of all %proc% updates processed.
@@ -584,6 +588,7 @@ goto inf
 
 :adpkr
 echo ----------Add-Package to boot.wim-------------
+set msu=
 :pdexr
 set ind=
 set /p "ind=Enter index of boot.wim: "
@@ -608,11 +613,12 @@ if %errorlevel% equ 0 (
 
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim" /Index:%ind%
 powershell write-host -fore cyan boot.wim index':'%ind% was mounted in %out%AIKMount '!'
+If "%othi%"=="1" goto :msur
 :cmsur
 echo.
 SET "othi=0"
 SET choice=
-SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages), I(Add packages to other index)  : "
+SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages), I(Add selected packages to other index)  : "
 IF /i '%choice%'=='S' goto smsur
 IF /i '%choice%'=='D' goto dmsur
 IF /i '%choice%'=='L' goto listr
@@ -625,18 +631,20 @@ Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 pause
 goto cmsur
 :msur
-powershell write-host -fore yellow Pls, Choose packages folder for update
+If "%othi%"=="1" if not "%msu%"=="" goto :omsur
+powershell write-host -fore yellow Pls, Choose UpdPackages folder for update
 pause
 set msu=
 set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
 for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "msu=%%I"
 IF NOT DEFINED msu (
-powershell write-host -fore darkyellow NOT Choiced UpdatePackage to import & goto cmsur
+powershell write-host -fore darkyellow NOT Choiced UpdPackages Dir to import & goto cmsur
 :dmsur
 dism /unmount-wim /mountdir:"%out%AIKMount" /discard
 goto ufinr
 )
-powershell write-host -fore yellow Choiced %msu%',' Pls wait...
+:omsur
+powershell write-host -fore yellow Choiced UpdPakages folder %msu%',' Pls wait...
 setlocal enabledelayedexpansion
 powershell -NoLogo -NoProfile ^
   "$acl = New-Object System.Security.AccessControl.DirectorySecurity;" ^
@@ -662,7 +670,7 @@ powershell write-host -fore magenta [OK] Successfully Added %%~nxU
         echo.
     )
 )
-if %proc% EQU 0 powershell write-host -fore darkyellow "Selected DirPackages NOT contains Updates to import" & goto cmsur
+if %proc% EQU 0 powershell write-host -fore darkyellow "Selected Packages Dir NOT contains Updates to import" & goto cmsur
 set /a sumf=proc-suc
 echo.......................................................
 powershell write-host -fore magenta 'Added successfully %suc%' -nonewline; write-host -fore red ',' failed %sumf% -nonewline; write-host -fore darkgreen ','of all %proc% updates processed.
