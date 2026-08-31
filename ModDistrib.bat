@@ -517,13 +517,18 @@ If "%othi%"=="1" goto :msu
 :cmsu
 echo.
 SET "othi=0"
+SET "bothi=0"
 SET choice=
-SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages), I(Add selected packages to other index)  : "
+if not "%msu%"=="" powershell write-host -fore yellow Selected Packages:%msu%
+@echo S(Save), D(Discard Updates), L(List Updates), P(Add packages), 
+@echo I(Add selected packages to other index), B(Add selected packages to boot.wim):
+SET /p choice=Pls, enter S/D/L/P/I/B:
 IF /i '%choice%'=='S' goto smsu
 IF /i '%choice%'=='D' goto dmsu
 IF /i '%choice%'=='L' goto list
 IF /i '%choice%'=='P' goto msu
 IF /i '%choice%'=='I' SET "othi=1" & goto smsu
+IF /i '%choice%'=='B' SET "bothi=1" & SET "othi=1" & goto smsu
 goto cmsu
 :list
 powershell write-host -fore darkgray Pls, wait for listing...
@@ -544,6 +549,7 @@ dism /unmount-wim /mountdir:"%out%AIKMount" /discard
 goto ufin
 )
 :omsu
+SET "othi="
 powershell write-host -fore yellow Choiced UpdPakages folder %msu%',' Pls wait...
 setlocal enabledelayedexpansion
 powershell -NoLogo -NoProfile ^
@@ -582,7 +588,8 @@ powershell write-host -fore magenta Changes saved '!'
 :ufin
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan Install.wim was unmounted '!'
-If "%othi%"=="1" goto pdex
+If "%othi%"=="1" if not "%bothi%"=="1" goto pdex
+If "%bothi%"=="1" if not "%msu%"=="" goto pdexr
 pause
 goto inf
 
@@ -618,6 +625,7 @@ If "%othi%"=="1" goto :msur
 echo.
 SET "othi=0"
 SET choice=
+if not "%msu%"=="" powershell write-host -fore yellow Selected Packages:%msu%
 SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages), I(Add selected packages to other index)  : "
 IF /i '%choice%'=='S' goto smsur
 IF /i '%choice%'=='D' goto dmsur
@@ -644,6 +652,7 @@ dism /unmount-wim /mountdir:"%out%AIKMount" /discard
 goto ufinr
 )
 :omsur
+SET "othi="
 powershell write-host -fore yellow Choiced UpdPakages folder %msu%',' Pls wait...
 setlocal enabledelayedexpansion
 powershell -NoLogo -NoProfile ^
