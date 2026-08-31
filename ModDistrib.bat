@@ -186,7 +186,7 @@ IF /i '%choice%'=='C' goto con
 IF /i '%choice%'=='I' goto det
 IF /i '%choice%'=='N' goto iso
 IF /i '%choice%'=='U' goto adpk
-IF /i '%choice%'=='W' goto \
+IF /i '%choice%'=='W' goto adpkr
 IF /i '%choice%'=='B' goto start
 goto sel
 
