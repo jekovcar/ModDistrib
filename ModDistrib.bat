@@ -25,10 +25,10 @@ if '%errorlevel%' NEQ '0' (
 ::--------------------------------------
 
 :: CODE ADMIN:
-title  Core_distribution_modifier
+title  Core_distribution_modifier v0.4
 @echo off
 :code
-powershell Write-Host "ModDistrib-extract v0.2'('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
+powershell Write-Host "ModDistrib-extract '('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
 for /f "tokens=2,*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\WimMount\Mounted Images" /s /v "Mount Path" 2^>nul ^| find "Mount Path"') do @if not exist "%%b" set "mountDir=%%b" & call set "mountDir=%%mountDir:REG_SZ    =%%"
 
 if defined mountDir (
@@ -519,6 +519,7 @@ echo.
 SET "othi=0"
 SET "bothi=0"
 SET choice=
+if "%msu%"=="" powershell write-host -fore darkyellow NOT Selected Packages
 if not "%msu%"=="" powershell write-host -fore yellow Selected Packages:%msu%
 @echo S(Save), D(Discard Updates), L(List Updates), P(Add packages), 
 @echo I(Add selected packages to other index), B(Add selected packages to boot.wim):
@@ -625,6 +626,7 @@ If "%othi%"=="1" goto :msur
 echo.
 SET "othi=0"
 SET choice=
+if "%msu%"=="" powershell write-host -fore darkyellow NOT Selected Packages
 if not "%msu%"=="" powershell write-host -fore yellow Selected Packages:%msu%
 SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages), I(Add selected packages to other index)  : "
 IF /i '%choice%'=='S' goto smsur
