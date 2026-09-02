@@ -25,7 +25,7 @@ if '%errorlevel%' NEQ '0' (
 ::--------------------------------------
 
 :: CODE ADMIN:
-title  Core_distribution_modifier v0.4
+title  Core_distribution_modifier v0.5
 @echo off
 :code
 powershell Write-Host "ModDistrib-extract '('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
@@ -171,7 +171,7 @@ powershell -Command "dism /get-wiminfo /wimfile:'%Fullpath%\sources\boot.wim' | 
 :sel
 echo.--------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
-@echo Mount Distr(M),Exp/Imp/Boot Distr(E),Remove index Distr(R),Export ESD^>WIM(S),BypassTPM(P),BypassNRO(F)
+@echo Mod Distr(M),Exp/Imp/Boot Distr(E),Remove index Distr(R),Export ESD^>WIM(S),BypassTPM(P),BypassNRO(F)
 @echo Convert Wim^>ESD(C),Details info Distr(I),Make Iso(N),AddPack to Install(U),AddPack to Boot(W),Back(B)?
 SET choice=
 SET /p choice=Pls, enter M/E/R/S/P/F/C/I/N/U/W/B: 
@@ -207,7 +207,7 @@ goto sel
 :det
 echo.--------------------Wim Details Info------------------------------
 set ind=
-set /p "ind=Enter index: "
+set /p "ind=Enter install index: "
 if "%ind%"=="" echo Not Entered Value & pause & goto det
 if %ind% equ +%ind% (
 set ind=%ind%
@@ -219,7 +219,7 @@ dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim" /Index:%ind%
 goto sel
 :del
 echo ----------Remove image of index-------------
-echo Enter indexes separated by spaces,like(5, 1, 2) : 
+echo Enter install indexes separated by spaces,like(5, 1, 2) : 
 set /p rein=
 if "%rein%"=="" powershell write-host -fore darkyellow NOT Enter Value & goto del
 powershell write-host -fore darkgray Sorting...
@@ -255,7 +255,7 @@ goto por
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim"
 :dlx
 set ind=
-set /p "ind=Enter index: "
+set /p "ind=Enter boot index: "
 if "%ind%"=="" echo Not Entered Value & pause & goto dlx
 if %ind% equ +%ind% (
 set ind=%ind%
@@ -279,7 +279,7 @@ goto por
 
 :dex
 set ind=
-set /p "ind=Enter index: "
+set /p "ind=Enter install index: "
 if "%ind%"=="" echo Not Entered Value & pause & goto dex
 if %ind% equ +%ind% (
 set ind=%ind%
@@ -325,7 +325,7 @@ dism /get-wiminfo /wimfile:"%wnm%"
 )
 :ieb
 set ind=
-set /p "ind=Enter index: "
+set /p "ind=Enter boot index: "
 if "%ind%"=="" echo Not Entered Value & pause & goto ieb
 if %ind% equ +%ind% (
 set ind=%ind%
@@ -364,7 +364,7 @@ dism /get-wiminfo /wimfile:"%wnm%"
 )
 :iex
 set ind=
-set /p "ind=Enter index: "
+set /p "ind=Enter install index: "
 if "%ind%"=="" echo Not Entered Value & pause & goto iex
 if %ind% equ +%ind% (
 set ind=%ind%
@@ -393,7 +393,7 @@ goto por
 echo ----------Mount image of index-------------
 :mdex
 set ind=
-set /p "ind=Enter index: "
+set /p "ind=Enter install index: "
 if "%ind%"=="" echo Not Entered Value & pause & goto mdex
 if %ind% equ +%ind% (
 set ind=%ind%
@@ -401,8 +401,18 @@ set ind=%ind%
 echo %ind% is NOT a digit.
     goto mdex
 )
-If not exist "%out%AIKMount" mkdir "%out%AIKMount"
-dism /mount-wim /wimfile:"%Fullpath%\sources\install.wim" /index:%ind% /mountdir:"%out%AIKMount"
+
+dism /Get-ImageInfo /ImageFile:"%Fullpath%\sources\Install.wim" /Index:%ind% >nul 2>&1
+if %errorlevel% equ 0 (
+    If not exist "%out%AIKMount" mkdir "%out%AIKMount"
+    dism /mount-wim /wimfile:"%Fullpath%\sources\Install.wim" /index:%ind% /mountdir:"%out%AIKMount"
+) else (
+    powershell write-host -fore red Entered Index':'%ind% does not exist in the specified image file.
+    echo To enter other Index
+    pause
+    goto mdex
+)
+
 powershell write-host -fore cyan Install.wim was mounted in %out%AIKMount '!'
 xcopy /S /-I /Q /Y "%out%AIKMount\windows\system32\kernel32.dll" "%out%"
 for /F %%I in ('powershell -Command "(Get-Item -LiteralPath '%out%kernel32.dll').VersionInfo.FileVersion"') do set kever=%%I
@@ -737,7 +747,7 @@ goto inf
 echo ----------Bypass-install Internet Requirement-------------
 :ndex
 set ind=
-set /p "ind=Enter index: "
+set /p "ind=Enter install index: "
 if "%ind%"=="" echo Not Entered Value & pause & goto ndex
 if %ind% equ +%ind% (
 set ind=%ind%
