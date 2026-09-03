@@ -18,11 +18,11 @@
 <br>16.Add package updates(not SPaks) to Install.wim image
 <br>17.Add package updates to Boot.wim image
 <br>18.Add options to set default Language of OS for install.wim, after addition UpdPaks(xx-xx lang code):
-<br>  Microsoft-Windows-Client-LanguagePack-Package_xx-xx-amd64-xx-xx.cab
+<br>....Microsoft-Windows-Client-LanguagePack-Package_xx-xx-amd64-xx-xx.cab
 <br>19.Add options to set default Language of WinPE Setup for Boot.wim, after addition UpdPaks:
-<br>  Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\xx-xx\lp.cab
-<br>  Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\xx-xx\WinPE-Setup_xx-xx.cab
-<br>  Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\xx-xx\WinPE-Setup-Client_xx-xx.cab
+<br>....Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\xx-xx\lp.cab
+<br>....Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\xx-xx\WinPE-Setup_xx-xx.cab
+<br>....Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\xx-xx\WinPE-Setup-Client_xx-xx.cab
 
 # Reference
 <p2>Function build ISO file [MSDN libr](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options?view=windows-11)
