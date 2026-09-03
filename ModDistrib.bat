@@ -25,7 +25,7 @@ if '%errorlevel%' NEQ '0' (
 ::--------------------------------------
 
 :: CODE ADMIN:
-title  Core_distribution_modifier v0.5
+title  Core_distribution_modifier v0.6
 @echo off
 :code
 powershell Write-Host "ModDistrib-extract '('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
@@ -531,15 +531,23 @@ SET "bothi=0"
 SET choice=
 if "%msu%"=="" powershell write-host -fore darkyellow NOT Selected Packages
 if not "%msu%"=="" powershell write-host -fore yellow Selected Packages:%msu%
-@echo S(Save), D(Discard Updates), L(List Updates), P(Add packages), 
+@echo S(Save),D(Discard Updates),L(List Updates),P(Add packages),G(Modify UI),
 @echo I(Add selected packages to other index), B(Add selected packages to boot.wim):
-SET /p choice=Pls, enter S/D/L/P/I/B:
+SET /p choice=Pls, enter S/D/L/P/G/I/B:
 IF /i '%choice%'=='S' goto smsu
 IF /i '%choice%'=='D' goto dmsu
 IF /i '%choice%'=='L' goto list
 IF /i '%choice%'=='P' goto msu
+IF /i '%choice%'=='G' goto mui
 IF /i '%choice%'=='I' SET "othi=1" & goto smsu
 IF /i '%choice%'=='B' SET "bothi=1" & SET "othi=1" & goto smsu
+goto cmsu
+:mui
+set mud=
+set /p "mud=Enter LangDef(ru-RU,en-US): "
+If "%mud%"=="" echo Not entered LangDef & pause & goto cmsu
+Dism /Image:"%out%AIKMount" /Set-AllIntl:%mud%
+Dism /Image:"%out%AIKMount" /Set-UILang:%mud%
 goto cmsu
 :list
 powershell write-host -fore darkgray Pls, wait for listing...
@@ -596,6 +604,7 @@ goto cmsu
 :smsu
     dism /unmount-wim /mountdir:"%out%AIKMount" /commit
 powershell write-host -fore magenta Changes saved '!'
+dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim" /Index:%ind%
 :ufin
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan Install.wim was unmounted '!'
@@ -637,13 +646,21 @@ echo.
 SET "othi=0"
 SET choice=
 if "%msu%"=="" powershell write-host -fore darkyellow NOT Selected Packages
-if not "%msu%"=="" powershell write-host -fore yellow Selected Packages:%msu%
-SET /p "choice=S(Save), D(Discard Updates), L(List Updates), P(Add packages), I(Add selected packages to other index)  : "
+if not "%msu%"=="" powershell write-host -fore yellow Selected Packs:%msu%
+SET /p "choice=S(Save),D(Discard),L(List Upds),P(Add Packs),G(Modify UI),I(Select Pasks to oth index):"
 IF /i '%choice%'=='S' goto smsur
 IF /i '%choice%'=='D' goto dmsur
 IF /i '%choice%'=='L' goto listr
 IF /i '%choice%'=='P' goto msur
+IF /i '%choice%'=='G' goto muir
 IF /i '%choice%'=='I' SET "othi=1" & goto smsur
+goto cmsur
+:muir
+set mudr=
+set /p "mudr=Enter LangDef(ru-RU,en-US): "
+If "%mudr%"=="" echo Not entered LangDef & pause & goto cmsu
+Dism /Image:"%out%AIKMount" /Set-AllIntl:%mudr%
+Dism /Image:"%out%AIKMount" /Set-UILang:%mudr%
 goto cmsur
 :listr
 powershell write-host -fore darkgray Pls, wait for listing...
@@ -700,6 +717,7 @@ goto cmsur
 :smsur
     dism /unmount-wim /mountdir:"%out%AIKMount" /commit
 powershell write-host -fore magenta Changes saved '!'
+dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim" /Index:%ind%
 :ufinr
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan boot.wim was unmounted '!'
