@@ -657,12 +657,12 @@ IF /i '%choice%'=='I' SET "othi=1" & goto smsur
 goto cmsur
 :muir
 set mudr=
-set /p "mudr=Enter LangDef(ru-RU,en-US): "
+set /p "mudr=Enter Default Name Lang like ru-RU (empty to menu): "
 If "%mudr%"=="" echo Not entered LangDef & pause & goto cmsur
 Dism /Image:"%out%AIKMount" /Set-AllIntl:%mudr%
 Dism /Image:"%out%AIKMount" /Set-UILang:%mudr%
 set remr=
-set /p "remr=Enter Name LangPack(to remove): "
+set /p "remr=Enter Name to remove LangPack (empty to menu): "
 If "%remr%"=="" echo Not entered LangDef & pause & goto cmsur
 dism /image:"%out%AIKMount" /remove-package /packagename:%remr%
 goto cmsur
