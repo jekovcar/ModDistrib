@@ -658,9 +658,13 @@ goto cmsur
 :muir
 set mudr=
 set /p "mudr=Enter LangDef(ru-RU,en-US): "
-If "%mudr%"=="" echo Not entered LangDef & pause & goto cmsu
+If "%mudr%"=="" echo Not entered LangDef & pause & goto cmsur
 Dism /Image:"%out%AIKMount" /Set-AllIntl:%mudr%
 Dism /Image:"%out%AIKMount" /Set-UILang:%mudr%
+set remr=
+set /p "remr=Enter Name LangPack(to remove): "
+If "%remr%"=="" echo Not entered LangDef & pause & goto cmsur
+dism /image:"%out%AIKMount" /remove-package /packagename:%remr%
 goto cmsur
 :listr
 powershell write-host -fore darkgray Pls, wait for listing...
