@@ -25,7 +25,7 @@ if '%errorlevel%' NEQ '0' (
 ::--------------------------------------
 
 :: CODE ADMIN:
-title  Core_distribution_modifier v0.6
+title  Core_distribution_modifier v0.7
 @echo off
 :code
 powershell Write-Host "ModDistrib-extract '('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
@@ -531,16 +531,25 @@ SET "bothi=0"
 SET choice=
 if "%msu%"=="" powershell write-host -fore darkyellow NOT Selected Packages
 if not "%msu%"=="" powershell write-host -fore yellow Selected Packages:%msu%
-@echo S(Save),D(Discard Updates),L(List Updates),P(Add packages),G(Modify UI),
-@echo I(Add selected packages to other index), B(Add selected packages to boot.wim):
-SET /p choice=Pls, enter S/D/L/P/G/I/B:
+
+@echo S(Save), D(Discard Updates), L(List Updates), P(Add packages), R(Remove packages),
+@echo G(Modify UI),I(Add selected packages to other index),B(Add selected packages to boot.wim):
+SET /p choice=Pls, enter S/D/L/P/R/G/I/B:
 IF /i '%choice%'=='S' goto smsu
 IF /i '%choice%'=='D' goto dmsu
 IF /i '%choice%'=='L' goto list
 IF /i '%choice%'=='P' goto msu
+IF /i '%choice%'=='R' goto rsu
 IF /i '%choice%'=='G' goto mui
 IF /i '%choice%'=='I' SET "othi=1" & goto smsu
 IF /i '%choice%'=='B' SET "bothi=1" & SET "othi=1" & goto smsu
+goto cmsu
+:rsu
+Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
+set remi=
+set /p "remi=Enter Name of Package to Remove (empty to menu): "
+If "%remi%"=="" echo Not entered LangDef & pause & goto cmsur
+dism /image:"%out%AIKMount" /remove-package /packagename:%remri%
 goto cmsu
 :mui
 set mud=
@@ -548,6 +557,8 @@ set /p "mud=Enter LangDef(ru-RU,en-US): "
 If "%mud%"=="" echo Not entered LangDef & pause & goto cmsu
 Dism /Image:"%out%AIKMount" /Set-AllIntl:%mud%
 Dism /Image:"%out%AIKMount" /Set-UILang:%mud%
+Dism /image:"%out%AIKMount" /gen-langINI /distribution:"%Fullpath%"
+xcopy /S /-I /Q /Y "%Fullpath%\sources\lang.ini" "%out%AIKMount\boot\sources\lang.ini"
 goto cmsu
 :list
 powershell write-host -fore darkgray Pls, wait for listing...
@@ -647,13 +658,24 @@ SET "othi=0"
 SET choice=
 if "%msu%"=="" powershell write-host -fore darkyellow NOT Selected Packages
 if not "%msu%"=="" powershell write-host -fore yellow Selected Packs:%msu%
-SET /p "choice=S(Save),D(Discard),L(List Upds),P(Add Packs),G(Modify UI),I(Select Pasks to oth index):"
+
+@echo S(Save),D(Discard Updates),L(List Updates),P(Add packages),R(Remove packages),
+@echo G(Modify UI),I(Add selected packages to other index):
+SET /p choice=Pls, enter S/D/L/P/R/G/I/B:
 IF /i '%choice%'=='S' goto smsur
 IF /i '%choice%'=='D' goto dmsur
 IF /i '%choice%'=='L' goto listr
 IF /i '%choice%'=='P' goto msur
+IF /i '%choice%'=='R' goto rsur
 IF /i '%choice%'=='G' goto muir
 IF /i '%choice%'=='I' SET "othi=1" & goto smsur
+goto cmsur
+:rsur
+Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
+set remr=
+set /p "remr=Enter Name of Package to Remove (empty to menu): "
+If "%remr%"=="" echo Not entered LangDef & pause & goto cmsur
+dism /image:"%out%AIKMount" /remove-package /packagename:%remr%
 goto cmsur
 :muir
 set mudr=
@@ -661,10 +683,6 @@ set /p "mudr=Enter Default Name Lang like ru-RU (empty to menu): "
 If "%mudr%"=="" echo Not entered LangDef & pause & goto cmsur
 Dism /Image:"%out%AIKMount" /Set-AllIntl:%mudr%
 Dism /Image:"%out%AIKMount" /Set-UILang:%mudr%
-set remr=
-set /p "remr=Enter Name to remove LangPack (empty to menu): "
-If "%remr%"=="" echo Not entered LangDef & pause & goto cmsur
-dism /image:"%out%AIKMount" /remove-package /packagename:%remr%
 goto cmsur
 :listr
 powershell write-host -fore darkgray Pls, wait for listing...
