@@ -548,8 +548,8 @@ goto cmsu
 Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 set remi=
 set /p "remi=Enter Name of Package to Remove (empty to menu): "
-If "%remi%"=="" echo Not entered LangDef & pause & goto cmsur
-dism /image:"%out%AIKMount" /remove-package /packagename:%remri%
+If "%remi%"=="" echo Not entered Package's Name & pause & goto cmsu
+dism /image:"%out%AIKMount" /remove-package /packagename:%remi%
 goto cmsu
 :mui
 set mud=
@@ -674,7 +674,7 @@ goto cmsur
 Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 set remr=
 set /p "remr=Enter Name of Package to Remove (empty to menu): "
-If "%remr%"=="" echo Not entered LangDef & pause & goto cmsur
+If "%remr%"=="" echo Not entered Package's Name & pause & goto cmsur
 dism /image:"%out%AIKMount" /remove-package /packagename:%remr%
 goto cmsur
 :muir
