@@ -550,7 +550,7 @@ set remi=
 set /p "remi=Enter Name of Package to Remove (empty to menu): "
 If "%remi%"=="" echo Not entered Package's Name & pause & goto cmsu
 dism /image:"%out%AIKMount" /remove-package /packagename:%remi%
-goto cmsu
+goto rsu
 :mui
 set mud=
 set /p "mud=Enter LangDef(ru-RU,en-US): "
@@ -676,7 +676,7 @@ set remr=
 set /p "remr=Enter Name of Package to Remove (empty to menu): "
 If "%remr%"=="" echo Not entered Package's Name & pause & goto cmsur
 dism /image:"%out%AIKMount" /remove-package /packagename:%remr%
-goto cmsur
+goto rsur
 :muir
 set mudr=
 set /p "mudr=Enter Default Name Lang like ru-RU (empty to menu): "
