@@ -215,7 +215,25 @@ set ind=%ind%
 echo %ind% is NOT a digit.
     goto det
 )
-dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim" /Index:%ind%
+dism /Get-ImageInfo /ImageFile:"%Fullpath%\sources\Install.wim" /Index:%ind% >nul 2>&1
+if %errorlevel% equ 0 (
+    dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim" /Index:%ind%
+) else (
+    powershell write-host -fore red Entered Index':'%ind% does not exist in the specified image file.
+    echo To enter other Index
+    pause
+    goto det
+)
+dism /Get-ImageInfo /ImageFile:"%Fullpath%\sources\boot.wim" /Index:1 >nul 2>&1
+if %errorlevel% equ 0 (
+     powershell -Command "dism /get-wiminfo /wimfile:'%Fullpath%\sources\boot.wim' /Index:1  | ForEach-Object { if ($_ -match '^([^:]+):(.*)$') { Write-Host $Matches[1] -ForegroundColor Yellow -NoNewline; Write-Host ':' -NoNewline; Write-Host $Matches[2] -ForegroundColor Green } else { Write-Host $_ -ForegroundColor Cyan } }"
+
+)
+dism /Get-ImageInfo /ImageFile:"%Fullpath%\sources\boot.wim" /Index:2 >nul 2>&1
+if %errorlevel% equ 0 (
+    powershell -Command "dism /get-wiminfo /wimfile:'%Fullpath%\sources\boot.wim' /Index:2  | ForEach-Object { if ($_ -match '^([^:]+):(.*)$') { Write-Host $Matches[1] -ForegroundColor Yellow -NoNewline; Write-Host ':' -NoNewline; Write-Host $Matches[2] -ForegroundColor Green } else { Write-Host $_ -ForegroundColor Cyan } }"
+
+)
 goto sel
 :del
 echo ----------Remove image of index-------------
