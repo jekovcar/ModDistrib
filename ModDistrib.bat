@@ -25,7 +25,7 @@ if '%errorlevel%' NEQ '0' (
 ::--------------------------------------
 
 :: CODE ADMIN:
-title  Core_distribution_modifier v0.7
+title  Core_distribution_modifier v0.8
 @echo off
 :code
 powershell Write-Host "ModDistrib-extract '('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
@@ -550,29 +550,63 @@ SET choice=
 if "%msu%"=="" powershell write-host -fore darkyellow NOT Selected Packages
 if not "%msu%"=="" powershell write-host -fore yellow Selected Packages:%msu%
 
-@echo S(Save), D(Discard Updates), L(List Updates), P(Add packages), R(Remove packages),
-@echo G(Modify UI),I(Add selected packages to other index),B(Add selected packages to boot.wim):
-SET /p choice=Pls, enter S/D/L/P/R/G/I/B:
+@echo S(Save),D(Discard Updates),L(List Updates),P(Add packages),R(Remove packs),C(Add capab),U(Remove capab),
+@echo G(Modify UI), I(Add selected packages to other index), B(Add selected packages to boot.wim):
+SET /p choice=Pls, enter S/D/L/P/R/C/U/G/I/B:
 IF /i '%choice%'=='S' goto smsu
 IF /i '%choice%'=='D' goto dmsu
 IF /i '%choice%'=='L' goto list
 IF /i '%choice%'=='P' goto msu
 IF /i '%choice%'=='R' goto rsu
+IF /i '%choice%'=='C' goto cap
+IF /i '%choice%'=='U' goto rcu
 IF /i '%choice%'=='G' goto mui
 IF /i '%choice%'=='I' SET "othi=1" & goto smsu
 IF /i '%choice%'=='B' SET "bothi=1" & SET "othi=1" & goto smsu
 goto cmsu
+:::::::::::::::::::::
+:cap
+set csu=
+:caps
+if not "%csu%"=="" goto capn
+if "%csu%"=="" powershell write-host -fore yellow Pls, Choose Capabilities folder for update & pause
+set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
+for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "csu=%%I"
+IF NOT DEFINED csu (
+powershell write-host -fore cyan NOT Choiced Capabilities source Dir & goto cmsu
+)
+:capn
+dism /Image:"%out%AIKMount" /Get-Capabilities /Format:Table
+powershell write-host -fore darkyellow Source:%csu% -nonewline & powershell write-host -fore yellow ' 'To change Set Empy
+set capi=
+set /p "capi=Enter Name of Capability(empty to menu): "
+If "%capi%"=="" powershell write-host -fore cyan Not entered Name & goto cmsu
+
+dism /Image:"%out%AIKMount" /Add-Capability /CapabilityName:%capi% /Source:%csu% /LimitAccess
+pause
+goto caps
+:::::::::::::::::::::
+:rcu
+dism /Image:"%out%AIKMount" /Get-Capabilities /Format:Table
+set remc=
+set /p "remc=Enter Name of Capability to Remove (empty to menu): "
+If "%remc%"=="" powershell write-host -fore cyan Not entered Name & goto cmsu
+dism /Image:"%out%AIKMount" /Remove-Capability /CapabilityName:%remc%
+pause
+goto rcu
+::::::::::::::::::::::
 :rsu
 Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 set remi=
 set /p "remi=Enter Name of Package to Remove (empty to menu): "
-If "%remi%"=="" echo Not entered Package's Name & pause & goto cmsu
+If "%remi%"=="" powershell write-host -fore cyan Not entered Name & goto cmsu
 dism /image:"%out%AIKMount" /remove-package /packagename:%remi%
+pause
 goto rsu
 :mui
 set mud=
 set /p "mud=Enter LangDef(ru-RU,en-US): "
-If "%mud%"=="" echo Not entered LangDef & pause & goto cmsu
+If "%mud%"=="" powershell write-host -fore cyan Not entered LangDef & goto cmsu
 Dism /Image:"%out%AIKMount" /Set-AllIntl:%mud%
 Dism /Image:"%out%AIKMount" /Set-UILang:%mud%
 Dism /image:"%out%AIKMount" /gen-langINI /distribution:"%Fullpath%"
@@ -591,7 +625,7 @@ set msu=
 set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
 for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "msu=%%I"
 IF NOT DEFINED msu (
-powershell write-host -fore darkyellow NOT Choiced UpdPackages Dir to import & goto cmsu
+powershell write-host -fore cyan NOT Choiced UpdPackages Dir to import & goto cmsu
 :dmsu
 dism /unmount-wim /mountdir:"%out%AIKMount" /discard
 goto ufin
@@ -692,7 +726,7 @@ goto cmsur
 Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 set remr=
 set /p "remr=Enter Name of Package to Remove (empty to menu): "
-If "%remr%"=="" echo Not entered Package's Name & pause & goto cmsur
+If "%remr%"=="" powershell write-host -fore cyan Not entered Name & goto cmsur
 dism /image:"%out%AIKMount" /remove-package /packagename:%remr%
 goto rsur
 :muir
