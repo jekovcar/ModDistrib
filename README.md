@@ -15,7 +15,7 @@
 <br>13.Make Boot Iso from folder distribution
 <br>14.Bypass install hardware restrictions (TPM)
 <br>15.Bypass install automatic updates, enable local account & Windows 11 Internet Requirement (NRO)
-<br>16.Add/Remove package updates(not SPaks) to Install.wim image
+<br>16.Add/Remove package updates(not SPaks) to Install.wim image(ModDistrib script rename them)
 <br>----->Names of Features(x64) must be ended: Package~'PublicTokenKey'~amd64~~.cab(PTK of the cab build)
 <br>17.Add/Remove Capabilities(Features) to Install.wim image
 <br>----->Names of Capability(x64) must be ended: Package~'PublicTokenKey'~amd64~~.cab(PTK of the cab build)
