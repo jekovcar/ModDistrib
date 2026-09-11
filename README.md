@@ -15,11 +15,11 @@
 <br>13.Make Boot Iso from folder distribution
 <br>14.Bypass install hardware restrictions (TPM)
 <br>15.Bypass install automatic updates, enable local account & Windows 11 Internet Requirement (NRO)
-<br>16.Add/Remove package updates(not SPaks) to Install.wim image
-<br>17.Add/Remove Features to Install.wim image (ModDistrib script rename them)
+<br>16.Add/Remove package updates(not SPaks) to Install.wim image (ModDistrib script rename them)
 <br>----->Names of Features(x64) must be ended: Package~'PublicTokenKey'~amd64~~.cab(PTK of the cab build)
-<br>18.Add/Remove Capability updates to Boot.wim image
+<br>17.Add/Remove package Capabilities(Features) to Install.wim image
 <br>----->Names of Capability(x64) must be ended: Package~'PublicTokenKey'~amd64~~.cab(PTK of the cab build)
+<br>18.Add/Remove package updates to Boot.wim image
 <br>19.Add options to set default Language of OS for install.wim, after addition Lang UpdPaks(xx-xx lang code):
 <br>----->Microsoft-Windows-Client-LanguagePack-Package_xx-xx.cab. Accordingly Dism generate lang.ini to Distributive.
 <br>20.Add options to set default Language of WinPE Setup for Boot.wim, after addition UpdPaks:
