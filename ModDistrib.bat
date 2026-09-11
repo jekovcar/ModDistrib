@@ -632,8 +632,55 @@ goto ufin
 )
 :omsu
 SET "othi="
-powershell write-host -fore yellow Choiced UpdPakages folder %msu%',' Pls wait...
+powershell write-host -fore yellow Choiced UpdPakage folder %msu%',' Pls wait...
+
 setlocal enabledelayedexpansion
+:prompt
+set "ans="
+set /p "ans=Do you want fix and renaming UpdPakage files? [Y/n] (Default is Y): "
+if "%ans%"=="" set "ans=Y"
+if /i "%ans%"=="Y" goto :say_yes
+if /i "%ans%"=="N" goto :say_no
+goto :prompt
+:say_yes
+:::::::::::::::::::::::::::::::Rename cab::::::::::::::::::::::
+set "CAB_FILE=%msu%\*.cab"
+set "TEMP_DIR=%TEMP%\cab_extract"
+if not exist "%CAB_FILE%" (
+    echo [ERROR] The file %CAB_FILE% does not exist.
+    goto :end
+)
+if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%"
+expand "%CAB_FILE%" -F:update.mum "%TEMP_DIR%" >nul 2>&1
+set "MUM_FILE=%TEMP_DIR%\update.mum"
+if not exist "%MUM_FILE%" (
+    echo [ERROR] Failed to extract update.mum from the CAB file.
+    goto :cleanup
+)
+echo Extracting PublicKeyToken...
+for /f "usebackq tokens=*" %%A in (`powershell -NoProfile -Command "[xml]$xml = Get-Content '%MUM_FILE%'; $xml.assembly.assemblyIdentity.publicKeyToken"`) do (
+    set "TOKEN=%%A"
+)
+:show_result
+if "%TOKEN%"=="" (
+    echo [ERROR] Could not find publicKeyToken inside update.mum.
+) else (
+    echo ==============================================
+    echo Found PublicKeyToken: %TOKEN%
+    echo ==============================================
+)
+:cleanup
+if exist "%TEMP_DIR%" rmdir /s /q "%TEMP_DIR%"
+:end
+powershell -NoProfile -Command "Get-ChildItem -Path '%msu%' -File | Rename-Item -NewName { $_.Name -replace '-amd64', '~%TOKEN%~amd64~~' }"
+powershell -NoProfile -Command "Get-ChildItem -Path '%msu%' -File | Rename-Item -NewName { $_.Name -replace '-x86', '~%TOKEN%~x86~~' }"
+powershell write-host -fore cyan All files was renamed accordingly with %TOKEN%
+:::::::::::::::::::::::::::End Rename cab::::::::::::::::::::::
+goto :kend
+:say_no
+echo Executing NO action...
+:kend
+
 powershell -NoLogo -NoProfile ^
   "$acl = New-Object System.Security.AccessControl.DirectorySecurity;" ^
   "$acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule('Administrators','FullControl','ContainerInherit,ObjectInherit','None','Allow')));" ^
