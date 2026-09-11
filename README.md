@@ -17,7 +17,7 @@
 <br>15.Bypass install automatic updates, enable local account & Windows 11 Internet Requirement (NRO)
 <br>16.Add/Remove package updates(not SPaks) to Install.wim image
 <br>17.Add/Remove package Capabilities(Features) to Install.wim image
-<br>----->Names of Capability files must be ended like: Package~'PublicTokenKey'~amd64~~.cab(present in .mum)
+<br>----->Names of Capability files must be ended like: Package~'PublicTokenKey'~amd64~~.cab(PTK of cab build)
 <br>18.Add/Remove package updates to Boot.wim image
 <br>19.Add options to set default Language of OS for install.wim, after addition Lang UpdPaks(xx-xx lang code):
 <br>----->Microsoft-Windows-Client-LanguagePack-Package_xx-xx.cab. Accordingly Dism generate lang.ini to Distributive.
