@@ -635,10 +635,11 @@ SET "othi="
 powershell write-host -fore yellow Choiced UpdPakage folder %msu%',' Pls wait...
 
 setlocal enabledelayedexpansion
+:::::::::Y/n:::::::::
 :prompt
 set "ans="
-set /p "ans=Do you want fix and renaming UpdPakage files? [Y/n] (Default is Y): "
-if "%ans%"=="" set "ans=Y"
+set /p "ans=Do you want fix and renaming UpdPakage files? [N/y] (Default is N): "
+if "%ans%"=="" set "ans=N"
 if /i "%ans%"=="Y" goto :say_yes
 if /i "%ans%"=="N" goto :say_no
 goto :prompt
@@ -678,9 +679,9 @@ powershell write-host -fore cyan All files was renamed accordingly with %TOKEN%
 :::::::::::::::::::::::::::End Rename cab::::::::::::::::::::::
 goto :kend
 :say_no
-echo Executing NO action...
+rem echo Executing NO action...
 :kend
-
+:::::::::end_Y/n:::::::::
 powershell -NoLogo -NoProfile ^
   "$acl = New-Object System.Security.AccessControl.DirectorySecurity;" ^
   "$acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule('Administrators','FullControl','ContainerInherit,ObjectInherit','None','Allow')));" ^
