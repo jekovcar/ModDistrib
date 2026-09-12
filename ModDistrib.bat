@@ -634,7 +634,6 @@ goto ufin
 SET "othi="
 powershell write-host -fore yellow Choiced UpdPakage folder %msu%',' Pls wait...
 
-setlocal enabledelayedexpansion
 :::::::::Y/n:::::::::
 :prompt
 set "ans="
@@ -644,43 +643,49 @@ if /i "%ans%"=="Y" goto :say_yes
 if /i "%ans%"=="N" goto :say_no
 goto :prompt
 :say_yes
+rem endlocal
 :::::::::::::::::::::::::::::::Rename cab::::::::::::::::::::::
-set "CAB_FILE=%msu%\*.cab"
-set "TEMP_DIR=%TEMP%\cab_extract"
-if not exist "%CAB_FILE%" (
-    echo [ERROR] The file %CAB_FILE% does not exist.
-    goto :end
-)
+setlocal enabledelayedexpansion
+
+echo --------------------------------------------------
+
+set "TEMP_DIR=%TEMP%\cab_extract_tmp"
 if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%"
-expand "%CAB_FILE%" -F:update.mum "%TEMP_DIR%" >nul 2>&1
-set "MUM_FILE=%TEMP_DIR%\update.mum"
-if not exist "%MUM_FILE%" (
-    echo [ERROR] Failed to extract update.mum from the CAB file.
-    goto :cleanup
-)
-echo Extracting PublicKeyToken...
-for /f "usebackq tokens=*" %%A in (`powershell -NoProfile -Command "[xml]$xml = Get-Content '%MUM_FILE%'; $xml.assembly.assemblyIdentity.publicKeyToken"`) do (
-    set "TOKEN=%%A"
-)
-:show_result
-if "%TOKEN%"=="" (
-    echo [ERROR] Could not find publicKeyToken inside update.mum.
-) else (
+
+for %%F in (%msu%\*.cab) do (
+    set "CAB_NAME=%%F"
+    
+    :: Extract update.mum to the temporary folder
+    expand "%%F" -f:update.mum "%TEMP_DIR%" >nul 2>&1
+    
+    if exist "%TEMP_DIR%\update.mum" (
+        :: Extract the token reliably using a background PowerShell execution
+for /f "usebackq tokens=*" %%A in (`powershell -Command "[xml]$xml = Get-Content '%TEMP_DIR%\update.mum' -Raw; $xml.assembly.assemblyIdentity.publicKeyToken" 2^>nul`) do set "TOKEN=%%A"
+for /f "usebackq tokens=*" %%A in (`powershell -NoProfile -Command "[xml]$xml = Get-Content '%TEMP_DIR%\update.mum' -Raw; $xml.assembly.assemblyIdentity.name" 2^>nul`) do set "ASSEMBLY_NAME=%%A"
+for /f "usebackq tokens=*" %%A in (`powershell -NoProfile -Command "[xml]$xml = Get-Content '%TEMP_DIR%\update.mum' -Raw; $xml.assembly.assemblyIdentity.processorArchitecture" 2^>nul`) do set "PROC_Arch=%%A"
+        
+        
+        
     echo ==============================================
-    echo Found PublicKeyToken: %TOKEN%
-    echo ==============================================
+    echo Renamed:
+    echo !ASSEMBLY_NAME!~!TOKEN!~!PROC_Arch!~~ 
+rem    echo ==============================================
+  powershell -NoProfile -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Rename-Item -Path '!CAB_NAME!' -NewName '!ASSEMBLY_NAME!~!TOKEN!~!PROC_Arch!~~.cab'"
+
+        
+        del "%TEMP_DIR%\update.mum" >nul 2>&1
+        set "TOKEN="
+        set "ASSEMBLY_NAME="
+        set "PROC_Arch="
+     
+    )
 )
-:cleanup
-if exist "%TEMP_DIR%" rmdir /s /q "%TEMP_DIR%"
-:end
-powershell -NoProfile -Command "Get-ChildItem -Path '%msu%' -File | Rename-Item -NewName { $_.Name -replace '-amd64', '~%TOKEN%~amd64~~' }"
-powershell -NoProfile -Command "Get-ChildItem -Path '%msu%' -File | Rename-Item -NewName { $_.Name -replace '-x86', '~%TOKEN%~x86~~' }"
-powershell write-host -fore cyan All files was renamed accordingly with %TOKEN%
+
+rmdir "%TEMP_DIR%" >nul 2>&1
+echo --------------------------------------------------
+echo Process completed, Pls wait... 
 :::::::::::::::::::::::::::End Rename cab::::::::::::::::::::::
-goto :kend
 :say_no
-rem echo Executing NO action...
-:kend
 :::::::::end_Y/n:::::::::
 powershell -NoLogo -NoProfile ^
   "$acl = New-Object System.Security.AccessControl.DirectorySecurity;" ^
