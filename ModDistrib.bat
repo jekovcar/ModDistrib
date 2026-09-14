@@ -25,7 +25,7 @@ if '%errorlevel%' NEQ '0' (
 ::--------------------------------------
 
 :: CODE ADMIN:
-title  Core_distribution_modifier v0.8
+title  Core_distribution_modifier v0.8.1
 @echo off
 :code
 powershell Write-Host "ModDistrib-extract '('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
@@ -382,8 +382,8 @@ dism /get-wiminfo /wimfile:"%wnm%"
 )
 :iex
 set ind=
-set /p "ind=Enter install index: "
-if "%ind%"=="" echo Not Entered Value & pause & goto iex
+set /p "ind=Enter imported  install index(empty to menu): "
+if "%ind%"=="" echo Not Entered Value & goto iex
 if %ind% equ +%ind% (
 set ind=%ind%
 ) else (
@@ -392,6 +392,14 @@ echo %ind% is NOT a digit.
 )
 powershell write-host -fore yellow Choosed import index: %ind%
 dism /get-wiminfo /wimfile:"%wnm%" /Index:%ind%
+set image_name=
+for /f "usebackq delims=" %%i in (`powershell -NoProfile -Command "(Get-WindowsImage -ImagePath '"%wnm%"' -Index %ind%).ImageName"`) do set "image_name=%%i"
+set desc=%image_name%
+for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "ESC=%%b"
+<nul set /p "=%ESC%[33mEnter Name for imported wim index(default: %image_name% ):%ESC%[0m "
+set /p "desc=
+
+powershell write-host -fore yellow To import above image index with name:' ' -nonewline & powershell write-host -fore cyan %desc%
 :imch
 SET choice=
 SET /p "choice=Enter(cont.)/B(back): "
@@ -399,13 +407,12 @@ IF /i '%choice%'=='B' goto por
 IF /i '%choice%'=='' goto imd
 goto imch
 :imd
-powershell write-host -fore yellow To import Details image index %ind% into Install Wim Distr:
-pause
-Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImageFile:"%Fullpath%\sources\install.wim"
-dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
-pause
-goto por
 
+Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImageFile:"%Fullpath%\install_new.wim" /DestinationName:"%desc%"
+Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImageFile:"%Fullpath%\sources\install.wim" /DestinationName:"%desc%"
+dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
+del /f /q "%Fullpath%\install_new.wim"
+goto por
 
 :ext
 echo ----------Mount image of index-------------
