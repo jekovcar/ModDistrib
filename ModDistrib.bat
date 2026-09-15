@@ -383,7 +383,7 @@ dism /get-wiminfo /wimfile:"%wnm%"
 :iex
 set ind=
 set /p "ind=Enter imported  install index(empty to menu): "
-if "%ind%"=="" echo Not Entered Value & goto iex
+if "%ind%"=="" echo Not Entered Value & goto por
 if %ind% equ +%ind% (
 set ind=%ind%
 ) else (
@@ -408,10 +408,10 @@ IF /i '%choice%'=='' goto imd
 goto imch
 :imd
 
-Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImageFile:"%Fullpath%\install_new.wim" /DestinationName:"%desc%"
-Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImageFile:"%Fullpath%\sources\install.wim" /DestinationName:"%desc%"
+Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImageFile:"%out%new.wim" /DestinationName:"%desc%"
+Dism /Export-Image /SourceImageFile:"%out%new.wim" /SourceIndex:1 /DestinationImageFile:"%Fullpath%\sources\install.wim" /DestinationName:"%desc%"
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
-del /f /q "%Fullpath%\install_new.wim"
+del /f /q "%out%new.wim"
 goto por
 
 :ext
