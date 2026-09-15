@@ -25,7 +25,7 @@ if '%errorlevel%' NEQ '0' (
 ::--------------------------------------
 
 :: CODE ADMIN:
-title  Core_distribution_modifier v0.8.1
+title  Core_distribution_modifier v0.8.3
 @echo off
 :code
 powershell Write-Host "ModDistrib-extract '('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
@@ -258,13 +258,14 @@ goto inf
 echo ----------Export/Import/Boot image of index-------------
 powershell write-host -fore darkgray 'Details info: import Wim (I), import Boot (B), Delete Boot Distr(D)' 
 @echo Export Wim of Distr(E), Import Wim to Distr(I), Import Boot to Distr(B),
-@echo Delete Boot of Distr(D), Back to Menu(M)?
+@echo Rename imported index Wim(N), Delete Boot of Distr(D), Back to Menu(M)?
 SET choice=
-SET /p choice=Pls, enter E/I/B/D/M: 
+SET /p choice=Pls, enter E/I/B/N/D/M: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
 IF /i '%choice%'=='E' goto dex
 IF /i '%choice%'=='I' goto imp
 IF /i '%choice%'=='B' goto ibp
+IF /i '%choice%'=='N' goto imn
 IF /i '%choice%'=='D' goto ibd
 IF /i '%choice%'=='M' goto inf
 goto por
@@ -366,6 +367,54 @@ Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImage
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim"
 pause
 goto por
+:::::::::::::::::::::::::::::::::::::====================================
+:imn
+echo.
+powershell write-host -fore darkyellow Install Wim of Distr:
+set wnm=
+for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'Install Wim (*.wim)|*.wim|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
+') do set wnm=%%i
+IF NOT DEFINED wnm (
+    ECHO NOT Choiced Wim to Rename & goto por
+) ELSE (
+powershell write-host -fore yellow Choosed Wim: %wnm%
+dism /get-wiminfo /wimfile:"%wnm%"
+)
+:iex
+set ind=
+set /p "ind=Enter wim index to Rename(empty to menu): "
+if "%ind%"=="" echo Not Entered Value & goto por
+if %ind% equ +%ind% (
+set ind=%ind%
+) else (
+echo %ind% is NOT a digit.
+    goto iex
+)
+powershell write-host -fore yellow Choosed wim index: %ind%
+dism /get-wiminfo /wimfile:"%wnm%" /Index:%ind%
+set image_name=
+for /f "usebackq delims=" %%i in (`powershell -NoProfile -Command "(Get-WindowsImage -ImagePath '"%wnm%"' -Index %ind%).ImageName"`) do set "image_name=%%i"
+set desc=%image_name%
+for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "ESC=%%b"
+<nul set /p "=%ESC%[33mEnter Name for imported wim index(default: %image_name% ):%ESC%[0m "
+set /p "desc=
+
+powershell write-host -fore yellow To import above image index with name:' ' -nonewline & powershell write-host -fore cyan %desc%
+echo %out%
+:imcn
+SET choice=
+SET /p "choice=Enter(cont.)/B(back): "
+IF /i '%choice%'=='B' goto por
+IF /i '%choice%'=='' goto imdn
+goto imcn
+:imdn
+
+Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImageFile:"%out%new.wim" /DestinationName:"%desc%"
+Dism /Export-Image /SourceImageFile:"%out%new.wim" /SourceIndex:1 /DestinationImageFile:"%wnm%" /DestinationName:"%desc%"
+dism /get-wiminfo /wimfile:"%wnm%"
+del /f /q "%out%new.wim"
+goto por
+:::::::::::::::::::::::::::::::::::::====================================
 
 :imp
 echo.
