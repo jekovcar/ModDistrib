@@ -26,7 +26,7 @@
 <br>----->WinPE_OCs\xx-xx\lp.cab
 <br>----->WinPE-Setup_xx-xx.cab
 <br>----->WinPE-Setup-Client_xx-xx.cab
-<br>21.Add options Rename imported image of wim(install/boot.wim)
+<br>21.Add options Rename image of wim(install/boot.wim)
 
 # Reference
 <p2>Function build ISO file [MSDN libr](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options?view=windows-11)
