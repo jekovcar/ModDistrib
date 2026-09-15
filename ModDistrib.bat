@@ -25,7 +25,7 @@ if '%errorlevel%' NEQ '0' (
 ::--------------------------------------
 
 :: CODE ADMIN:
-title  Core_distribution_modifier v0.8.3
+title  Core_distribution_modifier v0.8.4
 @echo off
 :code
 powershell Write-Host "ModDistrib-extract '('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
@@ -253,6 +253,23 @@ powershell write-host -fore darkyellow Index:%%a was removed
  )
 echo.
 powershell write-host -fore yellow WIM Index:%sein% of image was removed !
+echo.
+setlocal enabledelayedexpansion
+set index=1
+:loopd
+:: Check if the index exists before attempting to export
+Dism /Get-WimInfo /WimFile:"%FullPath%\sources\install.wim" /Index:%index% >nul 2>&1
+if %errorlevel% neq 0 (
+    echo.
+    echo All available indexes have been successfully exported.
+goto moved
+)
+echo Export of remaining index %index%...
+Dism /Export-Image /SourceImageFile:"%FullPath%\sources\install.wim" /SourceIndex:%index% /DestinationImageFile:"%FullPath%\sources\optimized.wim" > nul
+set /a index+=1
+goto loopd
+: moved
+move /y "%Fullpath%\sources\optimized.wim" "%Fullpath%\sources\install.wim"
 goto inf
 :por
 echo ----------Export/Import/Boot image of index-------------
@@ -309,7 +326,6 @@ echo %ind% is NOT a digit.
 powershell write-host -fore yellow Choosed export index: %ind%
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim" /Index:%ind%
 for /f "delims=" %%i in ('powershell -command "(Get-WindowsImage -ImagePath '%Fullpath%\sources\install.wim' -Index %ind%).ImageName"') do set nameExp=%%i
-set destExp=/DestinationName:"%nameExp%"
 powershell write-host -fore yellow Cont. will: install_%nameExp%_%ind%.wim
 :ewch
 SET choice=
@@ -319,12 +335,12 @@ IF /i '%choice%'=='' goto ewn
 goto ewch
 :ewn
 if exist "%out%install_%nameExp%_%ind%.wim" DEL /S /Q "%out%install_%nameExp%_%ind%.wim" > nul
-Dism /Export-Image /SourceImageFile:"%Fullpath%\sources\install.wim" /SourceIndex:%ind% /DestinationImageFile:"%out%install_%nameExp%_%ind%.wim" %destExp%
+Dism /Export-Image /SourceImageFile:"%Fullpath%\sources\install.wim" /SourceIndex:%ind% /DestinationImageFile:"%out%install_%nameExp%_%ind%.wim" /DestinationName:"%nameExp%" 
 dism /get-wiminfo /wimfile:"%out%install_%nameExp%_%ind%.wim"
 goto por
 :ewr
 if exist "%out%install_%nameExp%_%ind%.wim" DEL /S /Q "%out%install_%nameExp%_%ind%.wim" > nul
-Dism /Export-Image /SourceImageFile:"%Fullpath%\sources\install.wim" /SourceIndex:%ind% /DestinationImageFile:"%out%install_%nameExp%_%ind%.wim" %destExp%
+Dism /Export-Image /SourceImageFile:"%Fullpath%\sources\install.wim" /SourceIndex:%ind% /DestinationImageFile:"%out%install_%nameExp%_%ind%.wim" /DestinationName:"%nameExp%" 
 move "%out%install_%nameExp%_%ind%.wim" "%Fullpath%\sources\install.wim"
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
 goto por
@@ -399,7 +415,7 @@ for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1)
 <nul set /p "=%ESC%[33mEnter Name for imported wim index(default: %image_name% ):%ESC%[0m "
 set /p "desc=
 
-powershell write-host -fore yellow To import above image index with name:' ' -nonewline & powershell write-host -fore cyan %desc%
+powershell write-host -fore yellow To rename above image with Name:' ' -nonewline & powershell write-host -fore cyan %desc%
 :imcn
 SET choice=
 SET /p "choice=Enter(cont.)/B(back): "
