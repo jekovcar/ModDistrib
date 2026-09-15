@@ -4,7 +4,7 @@
 REM  --> Check for permissions
 >nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
 
-REM ---> If error flag set, we do not have admin.
+REM --> If error flag set, we do not have admin.
 if '%errorlevel%' NEQ '0' (
     echo Requesting administrative privileges...
     goto UACPrompt
@@ -258,7 +258,7 @@ goto inf
 echo ----------Export/Import/Boot image of index-------------
 powershell write-host -fore darkgray 'Details info: import Wim (I), import Boot (B), Delete Boot Distr(D)' 
 @echo Export Wim of Distr(E), Import Wim to Distr(I), Import Boot to Distr(B),
-@echo Rename imported index Wim(N), Delete Boot of Distr(D), Back to Menu(M)?
+@echo Rename image of Wim(N), Delete Boot image of Distr(D), Back to Menu(M)?
 SET choice=
 SET /p choice=Pls, enter E/I/B/N/D/M: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
@@ -372,7 +372,7 @@ goto por
 echo.
 powershell write-host -fore darkyellow Install Wim of Distr:
 set wnm=
-for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'Install Wim (*.wim)|*.wim|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
+for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'Install/Boot Wim (*.wim)|*.wim|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
 ') do set wnm=%%i
 IF NOT DEFINED wnm (
     ECHO NOT Choiced Wim to Rename & goto por
@@ -380,7 +380,7 @@ IF NOT DEFINED wnm (
 powershell write-host -fore yellow Choosed Wim: %wnm%
 dism /get-wiminfo /wimfile:"%wnm%"
 )
-:iex
+:iexn
 set ind=
 set /p "ind=Enter wim index to Rename(empty to menu): "
 if "%ind%"=="" echo Not Entered Value & goto por
@@ -388,7 +388,7 @@ if %ind% equ +%ind% (
 set ind=%ind%
 ) else (
 echo %ind% is NOT a digit.
-    goto iex
+    goto iexn
 )
 powershell write-host -fore yellow Choosed wim index: %ind%
 dism /get-wiminfo /wimfile:"%wnm%" /Index:%ind%
@@ -400,7 +400,6 @@ for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1)
 set /p "desc=
 
 powershell write-host -fore yellow To import above image index with name:' ' -nonewline & powershell write-host -fore cyan %desc%
-echo %out%
 :imcn
 SET choice=
 SET /p "choice=Enter(cont.)/B(back): "
@@ -410,6 +409,7 @@ goto imcn
 :imdn
 
 Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImageFile:"%out%new.wim" /DestinationName:"%desc%"
+dism /Delete-Image /ImageFile:"%wnm%" /Index:%ind%
 Dism /Export-Image /SourceImageFile:"%out%new.wim" /SourceIndex:1 /DestinationImageFile:"%wnm%" /DestinationName:"%desc%"
 dism /get-wiminfo /wimfile:"%wnm%"
 del /f /q "%out%new.wim"
