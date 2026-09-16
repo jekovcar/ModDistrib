@@ -25,7 +25,7 @@ if '%errorlevel%' NEQ '0' (
 ::--------------------------------------
 
 :: CODE ADMIN:
-title  Core_distribution_modifier v0.8.4
+title  Core_distribution_modifier v0.8.5
 @echo off
 :code
 powershell Write-Host "ModDistrib-extract '('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
@@ -310,6 +310,24 @@ goto bdch
 powershell write-host -fore yellow Choosed delete index: %ind%
 pause
 dism /Delete-Image /ImageFile:"%Fullpath%\sources\boot.wim" /Index:%ind%
+::=====================================
+setlocal enabledelayedexpansion
+set index=1
+:loopb
+:: Check if the index exists before attempting to export
+Dism /Get-WimInfo /WimFile:"%Fullpath%\sources\boot.wim" /Index:%index% >nul 2>&1
+if %errorlevel% neq 0 (
+    echo.
+    echo All available indexes have been successfully exported.
+goto moveb
+)
+echo Export of remaining index %index%...
+Dism /Export-Image /SourceImageFile:"%FullPath%\sources\boot.wim" /SourceIndex:%index% /DestinationImageFile:"%FullPath%\sources\optimized.wim" > nul
+set /a index+=1
+goto loopb
+: moveb
+move /y "%Fullpath%\sources\optimized.wim" "%Fullpath%\sources\boot.wim"
+::=====================================
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim"
 goto por
 
@@ -398,7 +416,7 @@ dism /get-wiminfo /wimfile:"%wnm%"
 )
 :iexn
 set ind=
-set /p "ind=Enter wim index to Rename(empty to menu): "
+set /p "ind=Enter wim index to Rename(empty to Menu): "
 if "%ind%"=="" echo Not Entered Value & goto por
 if %ind% equ +%ind% (
 set ind=%ind%
@@ -415,11 +433,11 @@ for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1)
 <nul set /p "=%ESC%[33mEnter Name for imported wim index(default: %image_name% ):%ESC%[0m "
 set /p "desc=
 
-powershell write-host -fore yellow To rename above image with Name:' ' -nonewline & powershell write-host -fore cyan %desc%
+echo To rename above image with Name: "%desc%"
 :imcn
 SET choice=
 SET /p "choice=Enter(cont.)/B(back): "
-IF /i '%choice%'=='B' goto por
+IF /i '%choice%'=='B' goto iexn
 IF /i '%choice%'=='' goto imdn
 goto imcn
 :imdn
@@ -429,7 +447,7 @@ dism /Delete-Image /ImageFile:"%wnm%" /Index:%ind%
 Dism /Export-Image /SourceImageFile:"%out%new.wim" /SourceIndex:1 /DestinationImageFile:"%wnm%" /DestinationName:"%desc%"
 dism /get-wiminfo /wimfile:"%wnm%"
 del /f /q "%out%new.wim"
-goto por
+goto iexn
 :::::::::::::::::::::::::::::::::::::====================================
 
 :imp
@@ -464,7 +482,7 @@ for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1)
 <nul set /p "=%ESC%[33mEnter Name for imported wim index(default: %image_name% ):%ESC%[0m "
 set /p "desc=
 
-powershell write-host -fore yellow To import above image index with name:' ' -nonewline & powershell write-host -fore cyan %desc%
+echo To import above image index with name: "%desc%"
 :imch
 SET choice=
 SET /p "choice=Enter(cont.)/B(back): "
