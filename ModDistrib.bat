@@ -291,8 +291,8 @@ goto por
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim"
 :dlx
 set ind=
-set /p "ind=Enter boot index: "
-if "%ind%"=="" echo Not Entered Value & pause & goto dlx
+set /p "ind=Enter remove boot index(empty to Menu): "
+if "%ind%"=="" echo Not Entered Value & goto por
 if %ind% equ +%ind% (
 set ind=%ind%
 ) else (
@@ -329,7 +329,7 @@ goto loopb
 move /y "%Fullpath%\sources\optimized.wim" "%Fullpath%\sources\boot.wim"
 ::=====================================
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim"
-goto por
+goto dlx
 
 :dex
 set ind=
@@ -378,8 +378,8 @@ dism /get-wiminfo /wimfile:"%wnm%"
 )
 :ieb
 set ind=
-set /p "ind=Enter boot index: "
-if "%ind%"=="" echo Not Entered Value & pause & goto ieb
+set /p "ind=Enter imported boot index(empty to Menu): "
+if "%ind%"=="" echo Not Entered Value & goto por
 if %ind% equ +%ind% (
 set ind=%ind%
 ) else (
@@ -388,6 +388,14 @@ echo %ind% is NOT a digit.
 )
 powershell write-host -fore yellow Choosed import index: %ind%
 dism /get-wiminfo /wimfile:"%wnm%" /Index:%ind%
+set image_name=
+for /f "usebackq delims=" %%i in (`powershell -NoProfile -Command "(Get-WindowsImage -ImagePath '"%wnm%"' -Index %ind%).ImageName"`) do set "image_name=%%i"
+set desc=%image_name%
+for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "ESC=%%b"
+<nul set /p "=%ESC%[33mEnter Name for imported wim index(default: %image_name% ):%ESC%[0m "
+set /p "desc=
+echo To import above image index with name:[36m "%desc%"[0m
+
 :iwch
 SET choice=
 SET /p "choice=Enter(cont.)/B(back): "
@@ -397,10 +405,12 @@ goto iwch
 :iwd
 powershell write-host -fore yellow To import Details Boot image index %ind% into Wim Boot Distr:
 pause
-Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImageFile:"%Fullpath%\sources\boot.wim"
+Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImageFile:"%out%new.wim" /DestinationName:"%desc%"
+Dism /Export-Image /SourceImageFile:"%out%new.wim" /SourceIndex:1 /DestinationImageFile:"%Fullpath%\sources\boot.wim" /DestinationName:"%desc%"
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim"
+del /f /q "%out%new.wim"
 pause
-goto por
+goto ieb
 :::::::::::::::::::::::::::::::::::::====================================
 :imn
 echo.
@@ -433,7 +443,7 @@ for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1)
 <nul set /p "=%ESC%[33mEnter Name for imported wim index(default: %image_name% ):%ESC%[0m "
 set /p "desc=
 
-echo To rename above image with Name: "%desc%"
+echo To rename above image with Name:[36m "%desc%"[0m
 :imcn
 SET choice=
 SET /p "choice=Enter(cont.)/B(back): "
@@ -465,7 +475,7 @@ dism /get-wiminfo /wimfile:"%wnm%"
 )
 :iex
 set ind=
-set /p "ind=Enter imported  install index(empty to menu): "
+set /p "ind=Enter imported  install index(empty to Menu): "
 if "%ind%"=="" echo Not Entered Value & goto por
 if %ind% equ +%ind% (
 set ind=%ind%
@@ -482,7 +492,7 @@ for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1)
 <nul set /p "=%ESC%[33mEnter Name for imported wim index(default: %image_name% ):%ESC%[0m "
 set /p "desc=
 
-echo To import above image index with name: "%desc%"
+echo To import above image index with name:[36m "%desc%"[0m
 :imch
 SET choice=
 SET /p "choice=Enter(cont.)/B(back): "
@@ -495,7 +505,7 @@ Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImage
 Dism /Export-Image /SourceImageFile:"%out%new.wim" /SourceIndex:1 /DestinationImageFile:"%Fullpath%\sources\install.wim" /DestinationName:"%desc%"
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
 del /f /q "%out%new.wim"
-goto por
+goto iex
 
 :ext
 echo ----------Mount image of index-------------
