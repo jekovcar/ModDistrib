@@ -641,7 +641,7 @@ if %errorlevel% equ 0 (
 
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim" /Index:%ind%
 powershell write-host -fore cyan Install.wim index':'%ind% was mounted in %out%AIKMount '!'
-If "%othi%"=="1" goto :msu
+If "%othi%"=="1" goto msu
 :cmsu
 echo.
 SET "othi=0"
@@ -650,7 +650,7 @@ SET choice=
 if "%msu%"=="" powershell write-host -fore darkyellow NOT Selected Packages
 if not "%msu%"=="" powershell write-host -fore yellow Selected Packages:%msu%
 
-@echo S(Save),D(Discard Updates),L(List Updates),P(Add packages),R(Remove packs),C(Add capab),U(Remove capab),
+@echo S(Save),D(Discard Updates),L(List Updates),P(Add/fix packages),R(Remove packs),C(Add capab),U(Remove capab),
 @echo G(Modify UI), I(Add selected packages to other index), B(Add selected packages to boot.wim):
 SET /p choice=Pls, enter S/D/L/P/R/C/U/G/I/B:
 IF /i '%choice%'=='S' goto smsu
@@ -677,7 +677,7 @@ powershell write-host -fore cyan NOT Choiced Capabilities source Dir & goto cmsu
 )
 :capn
 dism /Image:"%out%AIKMount" /Get-Capabilities /Format:Table
-powershell write-host -fore darkyellow Source:%csu% -nonewline & powershell write-host -fore yellow ' 'To change Set Empy
+powershell write-host -fore darkyellow Source:%csu%
 set capi=
 set /p "capi=Enter Name of Capability(empty to menu): "
 If "%capi%"=="" powershell write-host -fore cyan Not entered Name & goto cmsu
@@ -737,7 +737,7 @@ powershell write-host -fore yellow Choiced UpdPakage folder %msu%',' Pls wait...
 :::::::::Y/n:::::::::
 :prompt
 set "ans="
-set /p "ans=Do you want fix and renaming UpdPakage files? [N/y] (Default is N): "
+set /p "ans=Do you want fix renaming UpdPakage files? [N/y] (Default is N): "
 if "%ans%"=="" set "ans=N"
 if /i "%ans%"=="Y" goto :say_yes
 if /i "%ans%"=="N" goto :say_no
@@ -785,6 +785,14 @@ rmdir "%TEMP_DIR%" >nul 2>&1
 echo --------------------------------------------------
 echo Process completed, Pls wait... 
 :::::::::::::::::::::::::::End Rename cab::::::::::::::::::::::
+echo UpdPakage files were successfully fixed by own CAB assembly identifier.
+:iwcm
+SET choice=
+SET /p "choice=Enter(cont.)/B(back to Menu/fixed add capab): "
+IF /i '%choice%'=='B' goto cmsu
+IF /i '%choice%'=='' goto iwm
+goto iwcm
+:iwm
 :say_no
 :::::::::end_Y/n:::::::::
 powershell -NoLogo -NoProfile ^
