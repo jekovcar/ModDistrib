@@ -378,7 +378,7 @@ dism /get-wiminfo /wimfile:"%wnm%"
 )
 :ieb
 set ind=
-set /p "ind=Enter imported boot index(empty to Menu): "
+set /p "ind=Enter for import boot index(empty to Menu): "
 if "%ind%"=="" echo Not Entered Value & goto por
 if %ind% equ +%ind% (
 set ind=%ind%
@@ -475,7 +475,7 @@ dism /get-wiminfo /wimfile:"%wnm%"
 )
 :iex
 set ind=
-set /p "ind=Enter imported  install index(empty to Menu): "
+set /p "ind=Enter for import install index(empty to Menu): "
 if "%ind%"=="" echo Not Entered Value & goto por
 if %ind% equ +%ind% (
 set ind=%ind%
@@ -669,7 +669,7 @@ goto cmsu
 set csu=
 :caps
 if not "%csu%"=="" goto capn
-if "%csu%"=="" powershell write-host -fore yellow Pls, Choose Capabilities folder for update & pause
+if "%csu%"=="" powershell write-host -fore yellow Pls, Choose Capabilities folder for fixed updates & pause
 set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
 for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "csu=%%I"
 IF NOT DEFINED csu (
@@ -788,13 +788,14 @@ echo Process completed, Pls wait...
 echo UpdPakage files were successfully fixed by own CAB assembly identifier.
 :iwcm
 SET choice=
-SET /p "choice=Enter(cont.)/B(back to Menu/fixed add capab): "
+SET /p "choice=Enter(cont.)/B(back to Menu): "
 IF /i '%choice%'=='B' goto cmsu
 IF /i '%choice%'=='' goto iwm
 goto iwcm
 :iwm
 :say_no
 :::::::::end_Y/n:::::::::
+echo Process started, Pls wait... 
 powershell -NoLogo -NoProfile ^
   "$acl = New-Object System.Security.AccessControl.DirectorySecurity;" ^
   "$acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule('Administrators','FullControl','ContainerInherit,ObjectInherit','None','Allow')));" ^
