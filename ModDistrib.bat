@@ -25,7 +25,7 @@ if '%errorlevel%' NEQ '0' (
 ::--------------------------------------
 
 :: CODE ADMIN:
-title  Core_distribution_modifier v0.8.5
+title  Core_distribution_modifier v0.8.6
 @echo off
 :code
 powershell Write-Host "ModDistrib-extract '('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
@@ -452,11 +452,24 @@ IF /i '%choice%'=='' goto imdn
 goto imcn
 :imdn
 
-Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImageFile:"%out%new.wim" /DestinationName:"%desc%"
-dism /Delete-Image /ImageFile:"%wnm%" /Index:%ind%
-Dism /Export-Image /SourceImageFile:"%out%new.wim" /SourceIndex:1 /DestinationImageFile:"%wnm%" /DestinationName:"%desc%"
+:: Find the total number of indexes in the WIM file
+setlocal enabledelayedexpansion
+for /f "tokens=2 delims=:" %%A in ('dism /Get-WimInfo /WimFile:"%wnm%" ^| findstr /C:"Index :"') do (
+    set "total_ind=%%A"
+)
+:: Clean spaces from the total index count
+set "total_ind=%total_ind: =%"
+if "%total_ind%"=="1" (
+    Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImageFile:"%out%new.wim" /DestinationName:"%desc%"
+    del /f /q "%wnm%"
+    move /y "%out%new.wim" "%wnm%"
+) else (
+    Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImageFile:"%out%new.wim" /DestinationName:"%desc%"
+    dism /Delete-Image /ImageFile:"%wnm%" /Index:%ind%
+    Dism /Export-Image /SourceImageFile:"%out%new.wim" /SourceIndex:1 /DestinationImageFile:"%wnm%" /DestinationName:"%desc%"
+    del /f /q "%out%new.wim"
+)
 dism /get-wiminfo /wimfile:"%wnm%"
-del /f /q "%out%new.wim"
 goto iexn
 :::::::::::::::::::::::::::::::::::::====================================
 
@@ -795,7 +808,8 @@ goto iwcm
 :iwm
 :say_no
 :::::::::end_Y/n:::::::::
-echo Process started, Pls wait... 
+echo Process started, Pls wait...
+setlocal enabledelayedexpansion
 powershell -NoLogo -NoProfile ^
   "$acl = New-Object System.Security.AccessControl.DirectorySecurity;" ^
   "$acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule('Administrators','FullControl','ContainerInherit,ObjectInherit','None','Allow')));" ^
