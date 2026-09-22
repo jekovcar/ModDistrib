@@ -20,13 +20,14 @@
 <br>17.Add/Remove package Capabilities(Features) to Install.wim image
 <br>----->Names of Capability(x64) must be ended: Package~'PublicTokenKey'~amd64~~.cab(PTK of the cab build)
 <br>18.Add/Remove package updates to Boot.wim image
-<br>19.Add options to set default Language of OS for install.wim, after addition Lang UpdPaks(xx-xx lang code):
+<br>19.Add an option to set default Language of OS for install.wim, after addition Lang UpdPaks(xx-xx lang code):
 <br>----->Microsoft-Windows-Client-LanguagePack-Package_xx-xx.cab. Accordingly Dism generate lang.ini to Distributive.
-<br>20.Add options to set default Language of WinPE Setup for Boot.wim, after addition UpdPaks:
+<br>20.Add an option to set default Language of Setup WinPE, after addition UpdPaks:
 <br>----->WinPE_OCs\xx-xx\lp.cab
 <br>----->WinPE-Setup_xx-xx.cab
 <br>----->WinPE-Setup-Client_xx-xx.cab
-<br>21.Add options Rename image of wim(install/boot.wim)
+<br>21.Add an option Rename image of wim(install/boot.wim)
+<br>21.Add an option applay unattend.xml to image(install.wim)
 
 # Reference
 <p2>Function build ISO file [MSDN libr](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options?view=windows-11)
