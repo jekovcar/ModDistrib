@@ -25,7 +25,7 @@ if '%errorlevel%' NEQ '0' (
 ::--------------------------------------
 
 :: CODE ADMIN:
-title  Core_distribution_modifier v0.8.6
+title  Core_distribution_modifier v0.8.7
 @echo off
 :code
 powershell Write-Host "ModDistrib-extract '('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
@@ -664,8 +664,8 @@ if "%msu%"=="" powershell write-host -fore darkyellow NOT Selected Packages
 if not "%msu%"=="" powershell write-host -fore yellow Selected Packages:%msu%
 
 @echo S(Save),D(Discard Updates),L(List Updates),P(Add/fix packages),R(Remove packs),C(Add capab),U(Remove capab),
-@echo G(Modify UI), I(Add selected packages to other index), B(Add selected packages to boot.wim):
-SET /p choice=Pls, enter S/D/L/P/R/C/U/G/I/B:
+@echo G(Modify UI), T(Add unattend), I(Add selected packages to index), B(Add selected packages to boot.wim):
+SET /p choice=Pls, enter S/D/L/P/R/C/U/G/T/I/B:
 IF /i '%choice%'=='S' goto smsu
 IF /i '%choice%'=='D' goto dmsu
 IF /i '%choice%'=='L' goto list
@@ -674,10 +674,26 @@ IF /i '%choice%'=='R' goto rsu
 IF /i '%choice%'=='C' goto cap
 IF /i '%choice%'=='U' goto rcu
 IF /i '%choice%'=='G' goto mui
+IF /i '%choice%'=='T' goto uat
 IF /i '%choice%'=='I' SET "othi=1" & goto smsu
 IF /i '%choice%'=='B' SET "bothi=1" & SET "othi=1" & goto smsu
 goto cmsu
 :::::::::::::::::::::
+:uat
+echo.
+powershell write-host -fore darkyellow Choose an Unattend XML to apply:
+pause
+set xmf=
+for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'Unattend XML (*.xml)|*.xml|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
+') do set xmf=%%i
+IF NOT DEFINED xmf (
+    ECHO NOT Choiced Unattend XML & goto cmsu
+) ELSE (
+powershell write-host -fore yellow Choosed XML: %xmf%
+DISM.exe /Image:"%out%AIKMount" /Apply-Unattend:"%xmf%"
+)
+goto cmsu
+
 :cap
 set csu=
 :caps
@@ -911,6 +927,8 @@ set /p "mudr=Enter Default Name Lang like ru-RU (empty to menu): "
 If "%mudr%"=="" echo Not entered LangDef & pause & goto cmsur
 Dism /Image:"%out%AIKMount" /Set-AllIntl:%mudr%
 Dism /Image:"%out%AIKMount" /Set-UILang:%mudr%
+Dism /image:"%out%AIKMount" /gen-langINI /distribution:"%Fullpath%"
+xcopy /S /-I /Q /Y "%Fullpath%\sources\lang.ini" "%out%AIKMount\boot\sources\lang.ini"
 goto cmsur
 :listr
 powershell write-host -fore darkgray Pls, wait for listing...
