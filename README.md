@@ -27,7 +27,7 @@
 <br>----->WinPE-Setup_xx-xx.cab
 <br>----->WinPE-Setup-Client_xx-xx.cab
 <br>21.Add an option Rename image of wim(install/boot.wim)
-<br>21.Add an option applay unattend.xml to image(install.wim)
+<br>21.Add an option apply unattend.xml to image(install.wim) and validate xml structure error
 
 # Reference
 <p2>Function build ISO file [MSDN libr](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options?view=windows-11)
