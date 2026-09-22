@@ -684,13 +684,20 @@ echo.
 powershell write-host -fore darkyellow Choose an Unattend XML to apply:
 pause
 set xmf=
-for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'Unattend XML (*.xml)|*.xml|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
-') do set xmf=%%i
+for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'Unattend XML (*.xml)|*.xml|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"') do set xmf=%%i
 IF NOT DEFINED xmf (
-    ECHO NOT Choiced Unattend XML & goto cmsu
+    ECHO NOT Chosen Unattend XML & goto cmsu
 ) ELSE (
-powershell write-host -fore yellow Choosed XML: %xmf%
-DISM.exe /Image:"%out%AIKMount" /Apply-Unattend:"%xmf%"
+    :: Run the inline validation script. Returns Exit Code 0 on success, and Exit Code 1 on error.
+    powershell -ExecutionPolicy Bypass -Command "try { [xml]$x = Get-Content '%xmf%' -ErrorAction Stop; if ($x.unattend.settings.pass -contains 'offlineServicing') { Write-Host 'SUCCESS: XML is valid and ready for DISM /Apply-Unattend.' -ForegroundColor Green } else { Write-Warning 'DISM /Apply-Unattend will FAIL! Missing offlineServicing pass.'; [System.Environment]::Exit(1) } } catch { Write-Warning 'XML Syntax Error: $_'; [System.Environment]::Exit(1) }"
+
+    :: DISM runs ONLY if the validation block above finishes successfully (ErrorLevel is 0)
+    if not errorlevel 1 (
+    pause
+        DISM.exe /Image:"%out%AIKMount" /Apply-Unattend:"%xmf%"
+    ) else (
+        @powershell -Command "Write-Host 'DISM execution skipped due to XML validation failure.' -ForegroundColor Red"
+    )
 )
 goto cmsu
 
