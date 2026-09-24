@@ -171,8 +171,8 @@ powershell -Command "dism /get-wiminfo /wimfile:'%Fullpath%\sources\boot.wim' | 
 :sel
 echo.--------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
-@echo Mod Distr(M),Exp/Imp/Boot Distr(E),Remove index Distr(R),Export ESD^>WIM(S),BypassTPM(P),BypassNRO(F)
-@echo Convert Wim^>ESD(C),Details info Distr(I),Make Iso(N),AddPack to Install(U),AddPack to Boot(W),Back(B)?
+@echo Mod Distr(M),Exp/Imp/Ren Distr(E),Remove index Distr(R),Export ESD^>WIM(S),BypassTPM(P),BypassNRO(F)
+@echo Convert Wim^>ESD(C), Details info Distr(I), Make Iso(N), Upd/Mod Install(U), Upd/Mod Boot(W),Back(B)?
 SET choice=
 SET /p choice=Pls, enter M/E/R/S/P/F/C/I/N/U/W/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
@@ -347,20 +347,20 @@ for /f "delims=" %%i in ('powershell -command "(Get-WindowsImage -ImagePath '%Fu
 powershell write-host -fore yellow Cont. will: install_%nameExp%_%ind%.wim
 :ewch
 SET choice=
-SET /p "choice=Enter(cont.)/R(replace): "
+SET /p "choice=Enter(export)/R(replace): "
 IF /i '%choice%'=='R' goto ewr
 IF /i '%choice%'=='' goto ewn
 goto ewch
 :ewn
-if exist "%out%install_%nameExp%_%ind%.wim" DEL /S /Q "%out%install_%nameExp%_%ind%.wim" > nul
-Dism /Export-Image /SourceImageFile:"%Fullpath%\sources\install.wim" /SourceIndex:%ind% /DestinationImageFile:"%out%install_%nameExp%_%ind%.wim" /DestinationName:"%nameExp%" 
-dism /get-wiminfo /wimfile:"%out%install_%nameExp%_%ind%.wim"
+if exist "%out%install_%nameExp%_Exp_%ind%.wim" DEL /S /Q "%out%install_%nameExp%_Exp_%ind%.wim" > nul
+Dism /Export-Image /SourceImageFile:"%Fullpath%\sources\install.wim" /SourceIndex:%ind% /DestinationImageFile:"%out%install_%nameExp%_Exp_%ind%.wim" /DestinationName:"%nameExp%" 
+powershell write-host -fore cyan Exported' ':"%out%install_%nameExp%_Exp_%ind%.wim"
 goto por
 :ewr
 if exist "%out%install_%nameExp%_%ind%.wim" DEL /S /Q "%out%install_%nameExp%_%ind%.wim" > nul
 Dism /Export-Image /SourceImageFile:"%Fullpath%\sources\install.wim" /SourceIndex:%ind% /DestinationImageFile:"%out%install_%nameExp%_%ind%.wim" /DestinationName:"%nameExp%" 
 move "%out%install_%nameExp%_%ind%.wim" "%Fullpath%\sources\install.wim"
-dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
+powershell write-host -fore cyan Replaced' ':"%Fullpath%\sources\install.wim"
 goto por
 
 :ibp
@@ -747,6 +747,7 @@ Dism /Image:"%out%AIKMount" /Set-AllIntl:%mud%
 Dism /Image:"%out%AIKMount" /Set-UILang:%mud%
 Dism /image:"%out%AIKMount" /gen-langINI /distribution:"%Fullpath%"
 xcopy /S /-I /Q /Y "%Fullpath%\sources\lang.ini" "%out%AIKMount\boot\sources\lang.ini"
+powershell write-host -fore darkyellow The changes will take after Save
 goto cmsu
 :list
 powershell write-host -fore darkgray Pls, wait for listing...
@@ -872,7 +873,6 @@ If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan Install.wim was unmounted '!'
 If "%othi%"=="1" if not "%bothi%"=="1" goto pdex
 If "%bothi%"=="1" if not "%msu%"=="" goto pdexr
-pause
 goto inf
 
 :adpkr
@@ -936,6 +936,7 @@ Dism /Image:"%out%AIKMount" /Set-AllIntl:%mudr%
 Dism /Image:"%out%AIKMount" /Set-UILang:%mudr%
 Dism /image:"%out%AIKMount" /gen-langINI /distribution:"%Fullpath%"
 xcopy /S /-I /Q /Y "%Fullpath%\sources\lang.ini" "%out%AIKMount\boot\sources\lang.ini"
+powershell write-host -fore darkyellow The changes will take after Save
 goto cmsur
 :listr
 powershell write-host -fore darkgray Pls, wait for listing...
@@ -997,7 +998,6 @@ dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim" /Index:%ind%
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan boot.wim was unmounted '!'
 If "%othi%"=="1" goto pdexr
-pause
 goto inf
 
 :bpres
@@ -1033,7 +1033,6 @@ dism /unmount-wim /mountdir:"%out%AIKMount" /commit
 )
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan boot.wim was unmounted '!'
-pause
 goto inf
 
 :bpnro
@@ -1067,5 +1066,4 @@ powershell write-host -fore yellow Install restictions was bypassed.
 dism /unmount-wim /mountdir:"%out%AIKMount" /commit
 If exist "%out%AIKMount" RMDIR /S /Q "%out%AIKMount"
 powershell write-host -fore cyan boot.wim was unmounted '!'
-pause
 goto inf
