@@ -1088,7 +1088,7 @@ echo Opening folder browser for Secondary extracted ISO Distribution...
 for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "%psCommand%"`) do set "SEC_DIR=%%I"
 
 :: 3. Graphical input box for LANG
-for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter language code Like ru,es,de:', 'Language code', 'bg')"`) do set "LANG=%%I"
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter language code Like ru,es,de:', 'Language Secondary', 'bg')"`) do set "LANG=%%I"
 
 :: 4. Graphical input box for BOOT_NAME_MAIN
 for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter Main Boot Menu Display Name:', 'Main Boot Name', 'Windows Setup (Primary)')"`) do set "BOOT_NAME_MAIN=%%I"
@@ -1101,9 +1101,9 @@ cls
 echo ===================================================
 echo  SUCCESSFULLY SET VARIABLES:
 echo ===================================================
-echo MAIN_DIR       = %MAIN_DIR%
-echo Second_DIR     = %SEC_DIR%
-echo LANG           = %LANG%
+echo MAIN_DIR        = %MAIN_DIR%
+echo Second_DIR      = %SEC_DIR%
+echo LANG_SEC        = %LANG%
 echo BOOT_NAME_MAIN = %BOOT_NAME_MAIN%
 echo BOOT_NAME_SEC  = %BOOT_NAME_SEC%
 echo ===================================================
@@ -1132,52 +1132,96 @@ echo  STARTING AUTOMATED MULTI-BOOT ISO CREATION PROCESS
 echo =======================================================
 
 echo.
+
 echo [0/5] Verifying OS Build Versions...
+:: Validate directories are not the same
+if /i "%MAIN_DIR%"=="%SEC_DIR%" (
+    echo.
+    echo =======================================================
+    echo  ERROR: MAIN_DIR AND SEC_DIR CANNOT BE THE SAME!
+    echo  Main Directory:      %MAIN_DIR%
+    echo  Secondary Directory: %SEC_DIR%
+    echo =======================================================
+    pause
+    goto inf
+)
 
 if not exist "%MAIN_DIR%\sources\install.wim" (
     echo ERROR: Cannot find Main install.wim at %MAIN_DIR%\sources\install.wim
     pause
-    exit /b
+    goto inf
 )
 if not exist "%SEC_DIR%\sources\install.wim" (
     echo ERROR: Cannot find Secondary install.wim at %SEC_DIR%\sources\install.wim
     pause
-    exit /b
+    goto inf
 )
 
-:: Extract Version and ServicePack Build for Main Image
+:: Extract Version, ServicePack Build, and Architecture for Main Image
 set "VER_MAIN="
 set "UBR_MAIN="
+set "ARCH_MAIN="
+
 for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"%MAIN_DIR%\sources\install.wim" /Index:1 ^| findstr /C:"Version :"') do set "VER_MAIN=%%a"
 for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"%MAIN_DIR%\sources\install.wim" /Index:1 ^| findstr /C:"ServicePack Build :"') do set "UBR_MAIN=%%a"
-:: Extract Version and ServicePack Build for Secondary Image
+for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"%MAIN_DIR%\sources\install.wim" /Index:1 ^| findstr /I /C:"Architecture :"') do set "ARCH_MAIN=%%a"
+
+:: Extract Version, ServicePack Build, and Architecture for Secondary Image
 set "VER_SEC="
 set "UBR_SEC="
+set "ARCH_SEC="
+
 for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"%SEC_DIR%\sources\install.wim" /Index:1 ^| findstr /C:"Version :"') do set "VER_SEC=%%a"
 for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"%SEC_DIR%\sources\install.wim" /Index:1 ^| findstr /C:"ServicePack Build :"') do set "UBR_SEC=%%a"
+for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"%SEC_DIR%\sources\install.wim" /Index:1 ^| findstr /I /C:"Architecture :"') do set "ARCH_SEC=%%a"
+
 :: Trim leading/trailing spaces from extracted values
-for %%v in (VER_MAIN UBR_MAIN VER_SEC UBR_SEC) do (
-    if defined %%v for /f "tokens=*" %%a in ("!%%v!") do set "%%v=%%a"
+for %%v in (VER_MAIN UBR_MAIN ARCH_MAIN VER_SEC UBR_SEC ARCH_SEC) do (
+    if defined %%v (
+        for /f "tokens=*" %%a in ("!%%v!") do set "%%v=%%a"
+    )
 )
 
 :: Validate extraction
 if "%VER_MAIN%"=="" (
     echo ERROR: Failed to extract build information from Main install.wim!
     pause
-    exit /b 1
+    goto inf
+)
+if "%ARCH_MAIN%"=="" (
+    echo ERROR: Failed to extract architecture from Main install.wim!
+    pause
+    goto inf
 )
 if "%VER_SEC%"=="" (
     echo ERROR: Failed to extract build information from Secondary install.wim!
     pause
-    exit /b 1
+    goto inf
+)
+if "%ARCH_SEC%"=="" (
+    echo ERROR: Failed to extract architecture from Secondary install.wim!
+    pause
+    goto inf
 )
 
 :: Assemble full build strings (Format: Version.UBR)
 set "BUILD_MAIN=%VER_MAIN%.%UBR_MAIN%"
 set "BUILD_SEC=%VER_SEC%.%UBR_SEC%"
 
-echo Main WIM Build:      %BUILD_MAIN%
-echo Secondary WIM Build: %BUILD_SEC%
+echo Main WIM Build:          %BUILD_MAIN% (%ARCH_MAIN%)
+echo Secondary WIM Build:     %BUILD_SEC% (%ARCH_SEC%)
+
+:: Validate Architecture Match
+if /i not "%ARCH_MAIN%"=="%ARCH_SEC%" (
+    echo.
+    echo =======================================================
+    echo  CRITICAL ERROR: ARCHITECTURE MISMATCH DETECTED!
+    echo  Main Architecture [%ARCH_MAIN%] does not match Secondary Architecture [%ARCH_SEC%].
+    echo  Mixing different architectures will cause deployment failure.
+    echo =======================================================
+    pause
+    goto inf
+)
 
 if not "%BUILD_MAIN%"=="%BUILD_SEC%" (
     echo.
@@ -1187,11 +1231,13 @@ if not "%BUILD_MAIN%"=="%BUILD_SEC%" (
     echo  Mixing different builds will cause installation failures.
     echo =======================================================
     pause
-    exit /b 1
+    goto inf
 )
+
+echo SUCCESS: Versions match. Proceeding with creation...
 pause
 set "OUTPUT_ISO=%out%Win_%BUILD_MAIN%_Dual_%LANG%.iso"
-echo SUCCESS: Versions match. Proceeding with creation...
+
 echo.
 echo [1/5] Preparing boot.wim environments and language resources...
 
@@ -1204,7 +1250,7 @@ if exist "%MAIN_DIR%\sources\boot.wim" (
 ) else (
     echo ERROR: Cannot find any Main boot file!
     pause
-    exit /b
+    goto inf
 )
 
 if exist "%SEC_DIR%\sources\boot.wim" (
@@ -1215,7 +1261,7 @@ if exist "%SEC_DIR%\sources\boot.wim" (
 ) else (
     echo ERROR: Cannot find Secondary boot.wim source!
     pause
-    exit /b
+    goto inf
 )
 
 echo Copying Setup language resources to prevent media driver errors...
@@ -1252,18 +1298,17 @@ for /f "tokens=2 delims=:" %%A in ('dism /English /Get-WimInfo /WimFile:"%SEC_DI
 
 echo Found !IMG_COUNT! image(s) in secondary install.wim.
 
-:: Loop through each index, extract the exact name, and export it with the suffix
+:: Loop through each index, extract the exact name, export it, and forcefully rename it
 for /L %%i in (1,1,!IMG_COUNT!) do (
     set "WIM_NAME="
     
     :: Extract name string for current index
-    for /f "tokens=2 delims=" %%N in ('dism /English /Get-WimInfo /WimFile:"%SEC_DIR%\sources\install.wim" /Index:%%i ^| findstr /I "Name"') do (
+    for /f "tokens=2 delims=:" %%N in ('dism /English /Get-WimInfo /WimFile:"%SEC_DIR%\sources\install.wim" /Index:%%i ^| findstr /I /C:"Name :"') do (
         set "WIM_NAME=%%N"
     )
     
-    :: Clean leading/trailing spaces and perform the export
+    :: Clean leading/trailing spaces
     if defined WIM_NAME (
-        for /f "tokens=1* delims=:" %%X in ("!WIM_NAME!") do set "WIM_NAME=%%Y"
         for /f "tokens=*" %%X in ("!WIM_NAME!") do set "WIM_NAME=%%X"
         set "DEST_NAME=!WIM_NAME! %SUFIX_SEC%"
         
@@ -1274,6 +1319,17 @@ for /L %%i in (1,1,!IMG_COUNT!) do (
         ) else (
             echo Exporting index %%i: !DEST_NAME!...
             dism /Export-Image /SourceImageFile:"%SEC_DIR%\sources\install.wim" /SourceIndex:%%i /DestinationImageFile:"%MAIN_DIR%\sources\install.wim" /DestinationName:"!DEST_NAME!"
+            
+            :: Fetch the index number of the newly exported image (the last index in MAIN install.wim)
+            set "NEW_INDEX=0"
+            for /f "tokens=2 delims=:" %%K in ('dism /English /Get-WimInfo /WimFile:"%MAIN_DIR%\sources\install.wim" ^| findstr /I "Index"') do (
+                set "NEW_INDEX=%%K"
+            )
+            for /f "tokens=*" %%K in ("!NEW_INDEX!") do set "NEW_INDEX=%%K"
+
+            :: Explicitly force the Name and Description metadata inside the target install.wim
+            echo Setting target internal image properties for index !NEW_INDEX!...
+            dism /Set-ImageProperties /File:"%MAIN_DIR%\sources\install.wim" /Index:!NEW_INDEX! /Name:"!DEST_NAME!" /Description:"!DEST_NAME!" >nul
         )
     )
 )
@@ -1344,7 +1400,6 @@ bcdedit /store "%BCD_UEFI%" /set {%GUID_SEC_U%} winpe yes >nul
 bcdedit /store "%BCD_UEFI%" /set {%GUID_SEC_U%} detecthal yes >nul
 bcdedit /store "%BCD_UEFI%" /displayorder {%GUID_SEC_U%} /addlast >nul
 echo UEFI menu configured successfully.
-
 echo.
 echo [5/5] Packaging files into a dual bootable ISO image...
 
