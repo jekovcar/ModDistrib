@@ -1063,26 +1063,29 @@ powershell write-host -fore cyan boot.wim was unmounted '!'
 goto inf
 
 :mlpb
+echo.
 setlocal enabledelayedexpansion
-
 :: Define the reusable PowerShell folder selection command
 set "psCommand=(New-Object -ComObject Shell.Application).BrowseForFolder(0, 'Select Folder', 0, 17).Self.Path"
+
+:: Set default output directory
+if not defined out set "out=%~dp0"
 
 :: 1. Select MAIN_DIR
 set "MAIN_DIR=!Fullpath!"
 
 :: 2. Select SEC_DIR
-echo Opening folder browser for Secondary ISO Distribution...
+powershell write-host -fore darkyellow  Opening folder browser for Secondary ISO Distribution...
 for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "%psCommand%"`) do set "SEC_DIR=%%I"
 
 :: 3. Graphical input box for LANG
 for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter language code Like ru,es,de:', 'Language Secondary', 'bg')"`) do set "LANG=%%I"
 
 :: 4. Graphical input box for BOOT_NAME_MAIN
-for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter Main Boot Menu Display Name:', 'Main Boot Name', 'Windows Setup (Primary)')"`) do set "BOOT_NAME_MAIN=%%I"
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter Main Boot Menu Display Name:', 'Main Boot Name', 'Windows Setup Primary')"`) do set "BOOT_NAME_MAIN=%%I"
 
 :: 5. Graphical input box for BOOT_NAME_SEC
-for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter Secondary Boot Menu Display Name:', 'Secondary Boot Name', 'Windows Setup (Secondary) !LANG!')"`) do set "BOOT_NAME_SEC=%%I"
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter Secondary Boot Menu Display Name:', 'Secondary Boot Name', 'Windows Setup Secondary')"`) do set "BOOT_NAME_SEC=%%I (!LANG!)"
 
 :: Display results
 cls
@@ -1143,18 +1146,18 @@ set "VER_MAIN="
 set "UBR_MAIN="
 set "ARCH_MAIN="
 
-for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!MAIN_DIR!\sources\install.wim" /Index:1 ^| findstr /C:"Version :"') do set "VER_MAIN=%%a"
-for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!MAIN_DIR!\sources\install.wim" /Index:1 ^| findstr /C:"ServicePack Build :"') do set "UBR_MAIN=%%a"
-for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!MAIN_DIR!\sources\install.wim" /Index:1 ^| findstr /I /C:"Architecture :"') do set "ARCH_MAIN=%%a"
+for /f "tokens=1,* delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!MAIN_DIR!\sources\install.wim" /Index:1 ^| findstr /C:"Version :"') do set "VER_MAIN=%%b"
+for /f "tokens=1,* delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!MAIN_DIR!\sources\install.wim" /Index:1 ^| findstr /C:"ServicePack Build :"') do set "UBR_MAIN=%%b"
+for /f "tokens=1,* delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!MAIN_DIR!\sources\install.wim" /Index:1 ^| findstr /I /C:"Architecture :"') do set "ARCH_MAIN=%%b"
 
 :: Extract Version, ServicePack Build, and Architecture for Secondary Image
 set "VER_SEC="
 set "UBR_SEC="
 set "ARCH_SEC="
 
-for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" /Index:1 ^| findstr /C:"Version :"') do set "VER_SEC=%%a"
-for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" /Index:1 ^| findstr /C:"ServicePack Build :"') do set "UBR_SEC=%%a"
-for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" /Index:1 ^| findstr /I /C:"Architecture :"') do set "ARCH_SEC=%%a"
+for /f "tokens=1,* delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" /Index:1 ^| findstr /C:"Version :"') do set "VER_SEC=%%b"
+for /f "tokens=1,* delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" /Index:1 ^| findstr /C:"ServicePack Build :"') do set "UBR_SEC=%%b"
+for /f "tokens=1,* delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" /Index:1 ^| findstr /I /C:"Architecture :"') do set "ARCH_SEC=%%b"
 
 :: Trim spaces from extracted variables
 for %%v in (VER_MAIN UBR_MAIN ARCH_MAIN VER_SEC UBR_SEC ARCH_SEC) do (
@@ -1211,7 +1214,6 @@ if not "!BUILD_MAIN!"=="!BUILD_SEC!" (
 )
 
 echo SUCCESS: Versions match. Proceeding with creation...
-pause
 set "OUTPUT_ISO=!out!Win_!BUILD_MAIN!_Dual_!LANG!.iso"
 
 echo.
@@ -1275,7 +1277,7 @@ echo Found !IMG_COUNT! image(s) in secondary install.wim.
 for /L %%i in (1,1,!IMG_COUNT!) do (
     set "WIM_NAME="
     
-    for /f "tokens=2 delims=:" %%N in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" /Index:%%i ^| findstr /I /C:"Name :"') do (
+    for /f "tokens=1,* delims=:" %%M in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" /Index:%%i ^| findstr /I /C:"Name :"') do (
         set "WIM_NAME=%%N"
     )
     
@@ -1306,6 +1308,10 @@ echo.
 echo [3/5] Configuring Legacy BIOS BCD menu...
 set "BCD_BIOS=!MAIN_DIR!\boot\bcd"
 
+:: Release registry locks & clear file attributes on BIOS BCD
+reg unload HKLM\BCD00000000 >nul 2>&1
+attrib -h -s -r "!MAIN_DIR!\boot\bcd*" /s /d >nul 2>&1
+
 for /f "tokens=2 delims={}" %%g in ('bcdedit /store "!BCD_BIOS!" /enum OSLOADER ^| findstr "{"') do (
     if /i not "%%g"=="ramdiskoptions" bcdedit /store "!BCD_BIOS!" /delete {%%g} /f >nul 2>&1
 )
@@ -1331,11 +1337,18 @@ bcdedit /store "!BCD_BIOS!" /set {!GUID_SEC!} systemroot \windows >nul
 bcdedit /store "!BCD_BIOS!" /set {!GUID_SEC!} winpe yes >nul
 bcdedit /store "!BCD_BIOS!" /set {!GUID_SEC!} detecthal yes >nul
 bcdedit /store "!BCD_BIOS!" /displayorder {!GUID_SEC!} /addlast >nul
+
+bcdedit /store "!BCD_BIOS!" /timeout 20 >nul
+bcdedit /store "!BCD_BIOS!" /default {!GUID_MAIN!} >nul
 echo Legacy BIOS menu configured successfully.
 
 echo.
 echo [4/5] Configuring UEFI BCD menu...
 set "BCD_UEFI=!MAIN_DIR!\efi\microsoft\boot\bcd"
+
+:: Release registry locks & clear file attributes on UEFI BCD
+reg unload HKLM\BCD00000000 >nul 2>&1
+attrib -h -s -r "!MAIN_DIR!\efi\microsoft\boot\bcd*" /s /d >nul 2>&1
 
 for /f "tokens=2 delims={}" %%g in ('bcdedit /store "!BCD_UEFI!" /enum OSLOADER ^| findstr "{"') do (
     if /i not "%%g"=="ramdiskoptions" bcdedit /store "!BCD_UEFI!" /delete {%%g} /f >nul 2>&1
@@ -1362,24 +1375,36 @@ bcdedit /store "!BCD_UEFI!" /set {!GUID_SEC_U!} systemroot \windows >nul
 bcdedit /store "!BCD_UEFI!" /set {!GUID_SEC_U!} winpe yes >nul
 bcdedit /store "!BCD_UEFI!" /set {!GUID_SEC_U!} detecthal yes >nul
 bcdedit /store "!BCD_UEFI!" /displayorder {!GUID_SEC_U!} /addlast >nul
+
+bcdedit /store "!BCD_UEFI!" /timeout 10 >nul
+bcdedit /store "!BCD_UEFI!" /default {!GUID_MAIN_U!} >nul
 echo UEFI menu configured successfully.
+
+:: Delete transient lock/journal files before passing directory to Oscdimg
+del /f /q /a "!MAIN_DIR!\boot\bcd.LOG*" >nul 2>&1
+del /f /q /a "!MAIN_DIR!\efi\microsoft\boot\bcd.LOG*" >nul 2>&1
 
 echo.
 echo [5/5] Packaging files into a dual bootable ISO image...
 
-if not exist "%~dp0oscdimg.exe" (
-    powershell -Command "Write-Host 'Oscdimg missing. Attempting download...' -ForegroundColor DarkYellow"
-    powershell -Command "Start-BitsTransfer -Source 'https://msdl.microsoft.com/download/symbols/oscdimg.exe/688CABB065000/oscdimg.exe' -Destination '%~dp0'"
+set "OSCDIMG_EXE=%~dp0oscdimg.exe"
+if not exist "!OSCDIMG_EXE!" (
+    if exist "%ProgramFiles(x86)%\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\Oscdimg\oscdimg.exe" (
+        set "OSCDIMG_EXE=%ProgramFiles(x86)%\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\Oscdimg\oscdimg.exe"
+    ) else (
+        powershell -Command "Write-Host 'Oscdimg missing. Attempting download...' -ForegroundColor DarkYellow"
+        powershell -Command "Start-BitsTransfer -Source 'https://msdl.microsoft.com/download/symbols/oscdimg.exe/688CABB065000/oscdimg.exe' -Destination '%~dp0'"
+    )
 )
 
-if not exist "%~dp0oscdimg.exe" (
+if not exist "!OSCDIMG_EXE!" (
     echo ERROR: Oscdimg.exe could not be found or downloaded.
     pause
     goto inf
 )
 
-:: Run ISO creation (using current directory oscdimg.exe)
-"%~dp0oscdimg.exe" -bootdata:2#p0,e,b"!MAIN_DIR!\boot\etfsboot.com"#pEF,e,b"!MAIN_DIR!\efi\microsoft\boot\efisys.bin" -o -h -m -u2 -udfver102 "!MAIN_DIR!" "!OUTPUT_ISO!"
+:: Run ISO creation
+"!OSCDIMG_EXE!" -bootdata:2#p0,e,b"!MAIN_DIR!\boot\etfsboot.com"#pEF,e,b"!MAIN_DIR!\efi\microsoft\boot\efisys.bin" -o -h -m -u2 -udfver102 "!MAIN_DIR!" "!OUTPUT_ISO!"
 
 if errorlevel 1 (
     echo ERROR: Failed to create ISO image!
@@ -1399,5 +1424,4 @@ if exist "!MAIN_DIR!\sources\boot-sec.wim" del /Q "!MAIN_DIR!\sources\boot-sec.w
 if exist "!MAIN_DIR!\sources\!LANG_CULTURE!" rd /s /q "!MAIN_DIR!\sources\!LANG_CULTURE!" >nul
 echo.
 pause
-set "Fullpath=!SEC_DIR!"
 goto inf
