@@ -1,34 +1,21 @@
 @echo off
-for /f "delims=" %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/jekovcar/ModDistrib/releases/latest').tag_name"2^>nul') do (
+set "CURRENT_VER=0.8.8"
+for /f "delims=" %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/jekovcar/ModDistrib/releases/latest').tag_name" 2^>nul') do (
     set "LATEST_RELEASE=%%i")
-If "%LATEST_RELEASE%"=="" set "LATEST_RELEASE=OFFLINE"
-:: GotAdmin
-::-------------------------------------
-REM  --> Check for permissions
->nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
-
-REM --> If error flag set, we do not have admin.
-if '%errorlevel%' NEQ '0' (
-    echo Requesting administrative privileges...
-    goto UACPrompt
-) else ( goto gotAdmin )
-
-:UACPrompt
-    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
-    set params = %*:"="
-    echo UAC.ShellExecute "cmd.exe", "/c %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs"
-
-    "%temp%\getadmin.vbs"
-    del "%temp%\getadmin.vbs"
-    exit /B
-
+if "%LATEST_RELEASE%"=="" set "LATEST_RELEASE=OFFLINE"
+if not "%LATEST_RELEASE%"=="OFFLINE" (
+    powershell -NoProfile -Command "$curr = [version]('%CURRENT_VER%' -replace '[^0-9.]'); $latest = [version]('%LATEST_RELEASE%' -replace '[^0-9.]'); if ($curr -lt $latest) { exit 0 } else { exit 1 }" >nul 2>&1
+    if not errorlevel 1 set "warn=! ! !")
+:: GotAdmin-------------------------------
+ECHO Checking for admin...
+reg query HKU\S-1-5-19 1>nul 2>nul && goto :gotAdmin
+if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
 :gotAdmin
-    pushd "%CD%"
-    CD /D "%~dp0"
+PUSHD "%~dp0"
+CD /D "%CD%"
+@CLS
 ::--------------------------------------
-
-:: CODE ADMIN:
-title  Core_distribution_modifier v0.8.8 ^| GitHub: %LATEST_RELEASE%
+title  Core_distribution_modifier v%CURRENT_VER% ^| GitHub: %LATEST_RELEASE% %warn%
 @echo off
 :code
 powershell Write-Host "ModDistrib-extract '('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
@@ -178,7 +165,7 @@ powershell -Command "Write-Host 'boot wim is missed or modifyed' -ForegroundColo
 echo.--------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
 @echo Mod Distr(M),Exp/Imp/Ren Distr(E),Remove index Distr(R),Export ESD^>WIM(S),BypassTPM(P),BypassNRO(F)
-@echo Convert Wim^>ESD(C),Detinfo Distr(I),Make Iso(N),Upd/Mod Install(U),Upd/Mod Boot(W),MultipleBoot(L),Back(B)?
+@echo Convert Wim^>ESD(C),Detinfo Distr(I),Make Iso(N),Upd/Mod Install(U),Upd/Mod Boot(W),Dual-Boot Iso(L),Back(B)?
 SET choice=
 SET /p choice=Pls, enter M/E/R/S/P/F/C/I/N/U/W/L/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
@@ -1077,14 +1064,15 @@ goto inf
 
 :mlpb
 setlocal enabledelayedexpansion
+
 :: Define the reusable PowerShell folder selection command
 set "psCommand=(New-Object -ComObject Shell.Application).BrowseForFolder(0, 'Select Folder', 0, 17).Self.Path"
 
 :: 1. Select MAIN_DIR
-set "MAIN_DIR=%Fullpath%"
+set "MAIN_DIR=!Fullpath!"
 
 :: 2. Select SEC_DIR
-echo Opening folder browser for Secondary extracted ISO Distribution...
+echo Opening folder browser for Secondary ISO Distribution...
 for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "%psCommand%"`) do set "SEC_DIR=%%I"
 
 :: 3. Graphical input box for LANG
@@ -1093,66 +1081,59 @@ for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -Ass
 :: 4. Graphical input box for BOOT_NAME_MAIN
 for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter Main Boot Menu Display Name:', 'Main Boot Name', 'Windows Setup (Primary)')"`) do set "BOOT_NAME_MAIN=%%I"
 
-:: 5. Graphical input box for BOOT_NAME_SEC (Uses %LANG% as the default value)
-for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter Secondary Boot Menu Display Name:', 'Secondary Boot Name', 'Windows Setup (Secondary) %LANG%')"`) do set "BOOT_NAME_SEC=%%I"
+:: 5. Graphical input box for BOOT_NAME_SEC
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter Secondary Boot Menu Display Name:', 'Secondary Boot Name', 'Windows Setup (Secondary) !LANG!')"`) do set "BOOT_NAME_SEC=%%I"
 
 :: Display results
 cls
 echo ===================================================
 echo  SUCCESSFULLY SET VARIABLES:
 echo ===================================================
-echo MAIN_DIR        = %MAIN_DIR%
-echo Second_DIR      = %SEC_DIR%
-echo LANG_SEC        = %LANG%
-echo BOOT_NAME_MAIN = %BOOT_NAME_MAIN%
-echo BOOT_NAME_SEC  = %BOOT_NAME_SEC%
+echo MAIN_DIR        = !MAIN_DIR!
+echo Second_DIR      = !SEC_DIR!
+echo LANG_SEC        = !LANG!
+echo BOOT_NAME_MAIN = !BOOT_NAME_MAIN!
+echo BOOT_NAME_SEC  = !BOOT_NAME_SEC!
 echo ===================================================
+
 :esml
-SET choice=
-SET /p "choice=Enter(cont.)/M(Menu): "
-IF /i '%choice%'=='M' goto inf
-IF /i '%choice%'=='' goto esmp
+set "choice="
+set /p "choice=Enter(cont.)/M(Menu): "
+if /i "!choice!"=="M" goto inf
+if /i "!choice!"=="" goto esmp
 goto esml
+
 :esmp
+:: Automatically generate uppercase LANG_CODE and LANG_CULTURE
+if /i "!LANG!"=="ru" ( set "LANG_CODE=RU" & set "LANG_CULTURE=ru-RU" )
+if /i "!LANG!"=="bg" ( set "LANG_CODE=BG" & set "LANG_CULTURE=bg-BG" )
+if /i "!LANG!"=="de" ( set "LANG_CODE=DE" & set "LANG_CULTURE=de-DE" )
+if /i "!LANG!"=="fr" ( set "LANG_CODE=FR" & set "LANG_CULTURE=fr-FR" )
+if /i "!LANG!"=="es" ( set "LANG_CODE=ES" & set "LANG_CULTURE=es-ES" )
+if /i "!LANG!"=="en" ( set "LANG_CODE=EN" & set "LANG_CULTURE=en-US" )
 
-:: Automatically generate uppercase LANG_CODE (RU) and LANG_CULTURE (ru-RU)
-if "%LANG%"=="ru" ( set "LANG_CODE=RU" & set "LANG_CULTURE=ru-RU" )
-if "%LANG%"=="bg" ( set "LANG_CODE=BG" & set "LANG_CULTURE=bg-BG" )
-if "%LANG%"=="de" ( set "LANG_CODE=DE" & set "LANG_CULTURE=de-DE" )
-if "%LANG%"=="fr" ( set "LANG_CODE=FR" & set "LANG_CULTURE=fr-FR" )
-if "%LANG%"=="es" ( set "LANG_CODE=ES" & set "LANG_CULTURE=es-ES" )
-if "%LANG%"=="en" ( set "LANG_CODE=EN" & set "LANG_CULTURE=en-US" )
-
-:: Target Suffix for Second Language Indexes
-set "SUFIX_SEC=(%LANG_CODE%)"
-:: =======================================================
+set "SUFIX_SEC=(!LANG_CODE!)"
 
 echo =======================================================
 echo  STARTING AUTOMATED MULTI-BOOT ISO CREATION PROCESS
 echo =======================================================
-
 echo.
 
 echo [0/5] Verifying OS Build Versions...
-:: Validate directories are not the same
-if /i "%MAIN_DIR%"=="%SEC_DIR%" (
+if /i "!MAIN_DIR!"=="!SEC_DIR!" (
     echo.
-    echo =======================================================
-    echo  ERROR: MAIN_DIR AND SEC_DIR CANNOT BE THE SAME!
-    echo  Main Directory:      %MAIN_DIR%
-    echo  Secondary Directory: %SEC_DIR%
-    echo =======================================================
+    echo ERROR: MAIN_DIR AND SEC_DIR CANNOT BE THE SAME!
     pause
     goto inf
 )
 
-if not exist "%MAIN_DIR%\sources\install.wim" (
-    echo ERROR: Cannot find Main install.wim at %MAIN_DIR%\sources\install.wim
+if not exist "!MAIN_DIR!\sources\install.wim" (
+    echo ERROR: Cannot find Main install.wim at !MAIN_DIR!\sources\install.wim
     pause
     goto inf
 )
-if not exist "%SEC_DIR%\sources\install.wim" (
-    echo ERROR: Cannot find Secondary install.wim at %SEC_DIR%\sources\install.wim
+if not exist "!SEC_DIR!\sources\install.wim" (
+    echo ERROR: Cannot find Secondary install.wim at !SEC_DIR!\sources\install.wim
     pause
     goto inf
 )
@@ -1162,20 +1143,20 @@ set "VER_MAIN="
 set "UBR_MAIN="
 set "ARCH_MAIN="
 
-for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"%MAIN_DIR%\sources\install.wim" /Index:1 ^| findstr /C:"Version :"') do set "VER_MAIN=%%a"
-for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"%MAIN_DIR%\sources\install.wim" /Index:1 ^| findstr /C:"ServicePack Build :"') do set "UBR_MAIN=%%a"
-for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"%MAIN_DIR%\sources\install.wim" /Index:1 ^| findstr /I /C:"Architecture :"') do set "ARCH_MAIN=%%a"
+for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!MAIN_DIR!\sources\install.wim" /Index:1 ^| findstr /C:"Version :"') do set "VER_MAIN=%%a"
+for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!MAIN_DIR!\sources\install.wim" /Index:1 ^| findstr /C:"ServicePack Build :"') do set "UBR_MAIN=%%a"
+for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!MAIN_DIR!\sources\install.wim" /Index:1 ^| findstr /I /C:"Architecture :"') do set "ARCH_MAIN=%%a"
 
 :: Extract Version, ServicePack Build, and Architecture for Secondary Image
 set "VER_SEC="
 set "UBR_SEC="
 set "ARCH_SEC="
 
-for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"%SEC_DIR%\sources\install.wim" /Index:1 ^| findstr /C:"Version :"') do set "VER_SEC=%%a"
-for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"%SEC_DIR%\sources\install.wim" /Index:1 ^| findstr /C:"ServicePack Build :"') do set "UBR_SEC=%%a"
-for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"%SEC_DIR%\sources\install.wim" /Index:1 ^| findstr /I /C:"Architecture :"') do set "ARCH_SEC=%%a"
+for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" /Index:1 ^| findstr /C:"Version :"') do set "VER_SEC=%%a"
+for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" /Index:1 ^| findstr /C:"ServicePack Build :"') do set "UBR_SEC=%%a"
+for /f "tokens=2 delims=:" %%a in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" /Index:1 ^| findstr /I /C:"Architecture :"') do set "ARCH_SEC=%%a"
 
-:: Trim leading/trailing spaces from extracted values
+:: Trim spaces from extracted variables
 for %%v in (VER_MAIN UBR_MAIN ARCH_MAIN VER_SEC UBR_SEC ARCH_SEC) do (
     if defined %%v (
         for /f "tokens=*" %%a in ("!%%v!") do set "%%v=%%a"
@@ -1183,52 +1164,47 @@ for %%v in (VER_MAIN UBR_MAIN ARCH_MAIN VER_SEC UBR_SEC ARCH_SEC) do (
 )
 
 :: Validate extraction
-if "%VER_MAIN%"=="" (
+if "!VER_MAIN!"=="" (
     echo ERROR: Failed to extract build information from Main install.wim!
     pause
     goto inf
 )
-if "%ARCH_MAIN%"=="" (
+if "!ARCH_MAIN!"=="" (
     echo ERROR: Failed to extract architecture from Main install.wim!
     pause
     goto inf
 )
-if "%VER_SEC%"=="" (
+if "!VER_SEC!"=="" (
     echo ERROR: Failed to extract build information from Secondary install.wim!
     pause
     goto inf
 )
-if "%ARCH_SEC%"=="" (
+if "!ARCH_SEC!"=="" (
     echo ERROR: Failed to extract architecture from Secondary install.wim!
     pause
     goto inf
 )
 
-:: Assemble full build strings (Format: Version.UBR)
-set "BUILD_MAIN=%VER_MAIN%.%UBR_MAIN%"
-set "BUILD_SEC=%VER_SEC%.%UBR_SEC%"
+set "BUILD_MAIN=!VER_MAIN!.!UBR_MAIN!"
+set "BUILD_SEC=!VER_SEC!.!UBR_SEC!"
 
-echo Main WIM Build:          %BUILD_MAIN% (%ARCH_MAIN%)
-echo Secondary WIM Build:     %BUILD_SEC% (%ARCH_SEC%)
+echo Main WIM Build:          !BUILD_MAIN! (!ARCH_MAIN!)
+echo Secondary WIM Build:     !BUILD_SEC! (!ARCH_SEC!)
 
 :: Validate Architecture Match
-if /i not "%ARCH_MAIN%"=="%ARCH_SEC%" (
+if /i not "!ARCH_MAIN!"=="!ARCH_SEC!" (
     echo.
     echo =======================================================
     echo  CRITICAL ERROR: ARCHITECTURE MISMATCH DETECTED!
-    echo  Main Architecture [%ARCH_MAIN%] does not match Secondary Architecture [%ARCH_SEC%].
-    echo  Mixing different architectures will cause deployment failure.
     echo =======================================================
     pause
     goto inf
 )
 
-if not "%BUILD_MAIN%"=="%BUILD_SEC%" (
+if not "!BUILD_MAIN!"=="!BUILD_SEC!" (
     echo.
     echo =======================================================
     echo  CRITICAL ERROR: BUILD MISMATCH DETECTED!
-    echo  Main Build [%BUILD_MAIN%] does not match Secondary Build [%BUILD_SEC%].
-    echo  Mixing different builds will cause installation failures.
     echo =======================================================
     pause
     goto inf
@@ -1236,16 +1212,16 @@ if not "%BUILD_MAIN%"=="%BUILD_SEC%" (
 
 echo SUCCESS: Versions match. Proceeding with creation...
 pause
-set "OUTPUT_ISO=%out%Win_%BUILD_MAIN%_Dual_%LANG%.iso"
+set "OUTPUT_ISO=!out!Win_!BUILD_MAIN!_Dual_!LANG!.iso"
 
 echo.
 echo [1/5] Preparing boot.wim environments and language resources...
 
-if exist "%MAIN_DIR%\sources\boot.wim" (
+if exist "!MAIN_DIR!\sources\boot.wim" (
     echo Original boot.wim found. Renaming to boot-main.wim...
-    copy "%MAIN_DIR%\sources\boot.wim" "%MAIN_DIR%\sources\boot-main.wim" /Y >nul
-    del "%MAIN_DIR%\sources\boot.wim" /Q
-) else if exist "%MAIN_DIR%\sources\boot-main.wim" (
+    copy "!MAIN_DIR!\sources\boot.wim" "!MAIN_DIR!\sources\boot-main.wim" /Y >nul
+    del "!MAIN_DIR!\sources\boot.wim" /Q
+) else if exist "!MAIN_DIR!\sources\boot-main.wim" (
     echo boot-main.wim already exists. Skipping Main boot setup.
 ) else (
     echo ERROR: Cannot find any Main boot file!
@@ -1253,10 +1229,10 @@ if exist "%MAIN_DIR%\sources\boot.wim" (
     goto inf
 )
 
-if exist "%SEC_DIR%\sources\boot.wim" (
+if exist "!SEC_DIR!\sources\boot.wim" (
     echo Copying Secondary boot.wim as boot-sec.wim...
-    copy "%SEC_DIR%\sources\boot.wim" "%MAIN_DIR%\sources\boot-sec.wim" /Y >nul
-) else if exist "%MAIN_DIR%\sources\boot-sec.wim" (
+    copy "!SEC_DIR!\sources\boot.wim" "!MAIN_DIR!\sources\boot-sec.wim" /Y >nul
+) else if exist "!MAIN_DIR!\sources\boot-sec.wim" (
     echo boot-sec.wim already exists in the main folder. Skipping Secondary boot setup.
 ) else (
     echo ERROR: Cannot find Secondary boot.wim source!
@@ -1265,171 +1241,163 @@ if exist "%SEC_DIR%\sources\boot.wim" (
 )
 
 echo Copying Setup language resources to prevent media driver errors...
-if exist "%SEC_DIR%\sources\%LANG_CULTURE%" (
-    echo Copying %LANG_CULTURE% MUI folder...
-    xcopy "%SEC_DIR%\sources\%LANG_CULTURE%" "%MAIN_DIR%\sources\%LANG_CULTURE%\" /E /I /H /Y >nul
+if exist "!SEC_DIR!\sources\!LANG_CULTURE!" (
+    echo Copying !LANG_CULTURE! MUI folder...
+    xcopy "!SEC_DIR!\sources\!LANG_CULTURE!" "!MAIN_DIR!\sources\!LANG_CULTURE!\" /E /I /H /Y >nul
 )
-if exist "%SEC_DIR%\sources\license" (
+if exist "!SEC_DIR!\sources\license" (
     echo Copying Secondary license files...
-    xcopy "%SEC_DIR%\sources\license" "%MAIN_DIR%\sources\license\" /E /I /H /Y >nul
+    xcopy "!SEC_DIR!\sources\license" "!MAIN_DIR!\sources\license\" /E /I /H /Y >nul
 )
 
 :: Generate a fresh, combined dual-language lang.ini file
 echo Generating multi-language lang.ini...
-if exist "%MAIN_DIR%\sources\lang.ini" del "%MAIN_DIR%\sources\lang.ini" /Q >nul
+if exist "!MAIN_DIR!\sources\lang.ini" del "!MAIN_DIR!\sources\lang.ini" /Q >nul
 (
 echo [Available Cultures]
-echo %LANG_CULTURE% = 0
+echo !LANG_CULTURE! = 0
 echo en-US = 1
 echo.
 echo [Fallback Languages]
-echo %LANG_CULTURE% = en-US
-) > "%MAIN_DIR%\sources\lang.ini"
+echo !LANG_CULTURE! = en-US
+) > "!MAIN_DIR!\sources\lang.ini"
 
 echo.
 echo [2/5] Exporting ALL Secondary indexes into Main install.wim...
-setlocal enabledelayedexpansion
 
-:: Count how many indexes exist in the secondary install.wim
 set "IMG_COUNT=0"
-for /f "tokens=2 delims=:" %%A in ('dism /English /Get-WimInfo /WimFile:"%SEC_DIR%\sources\install.wim" ^| findstr /I "Index"') do (
+for /f "tokens=2 delims=:" %%A in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" ^| findstr /I "Index"') do (
     set /a IMG_COUNT+=1
 )
 
 echo Found !IMG_COUNT! image(s) in secondary install.wim.
 
-:: Loop through each index, extract the exact name, export it, and forcefully rename it
 for /L %%i in (1,1,!IMG_COUNT!) do (
     set "WIM_NAME="
     
-    :: Extract name string for current index
-    for /f "tokens=2 delims=:" %%N in ('dism /English /Get-WimInfo /WimFile:"%SEC_DIR%\sources\install.wim" /Index:%%i ^| findstr /I /C:"Name :"') do (
+    for /f "tokens=2 delims=:" %%N in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" /Index:%%i ^| findstr /I /C:"Name :"') do (
         set "WIM_NAME=%%N"
     )
     
-    :: Clean leading/trailing spaces
     if defined WIM_NAME (
         for /f "tokens=*" %%X in ("!WIM_NAME!") do set "WIM_NAME=%%X"
-        set "DEST_NAME=!WIM_NAME! %SUFIX_SEC%"
+        set "DEST_NAME=!WIM_NAME! !SUFIX_SEC!"
         
-        :: Check if this targeted name already exists to prevent duplicate exports
-        dism /English /Get-WimInfo /WimFile:"%MAIN_DIR%\sources\install.wim" | findstr /C:"!DEST_NAME!" >nul
+        dism /English /Get-WimInfo /WimFile:"!MAIN_DIR!\sources\install.wim" | findstr /C:"!DEST_NAME!" >nul
         if !errorlevel! equ 0 (
             echo Index %%i [!DEST_NAME!] is already inside install.wim. Skipping.
         ) else (
             echo Exporting index %%i: !DEST_NAME!...
-            dism /Export-Image /SourceImageFile:"%SEC_DIR%\sources\install.wim" /SourceIndex:%%i /DestinationImageFile:"%MAIN_DIR%\sources\install.wim" /DestinationName:"!DEST_NAME!"
+            dism /Export-Image /SourceImageFile:"!SEC_DIR!\sources\install.wim" /SourceIndex:%%i /DestinationImageFile:"!MAIN_DIR!\sources\install.wim" /DestinationName:"!DEST_NAME!"
             
-            :: Fetch the index number of the newly exported image (the last index in MAIN install.wim)
             set "NEW_INDEX=0"
-            for /f "tokens=2 delims=:" %%K in ('dism /English /Get-WimInfo /WimFile:"%MAIN_DIR%\sources\install.wim" ^| findstr /I "Index"') do (
+            for /f "tokens=2 delims=:" %%K in ('dism /English /Get-WimInfo /WimFile:"!MAIN_DIR!\sources\install.wim" ^| findstr /I "Index"') do (
                 set "NEW_INDEX=%%K"
             )
             for /f "tokens=*" %%K in ("!NEW_INDEX!") do set "NEW_INDEX=%%K"
 
-            :: Explicitly force the Name and Description metadata inside the target install.wim
             echo Setting target internal image properties for index !NEW_INDEX!...
-            dism /Set-ImageProperties /File:"%MAIN_DIR%\sources\install.wim" /Index:!NEW_INDEX! /Name:"!DEST_NAME!" /Description:"!DEST_NAME!" >nul
+            dism /Set-ImageProperties /File:"!MAIN_DIR!\sources\install.wim" /Index:!NEW_INDEX! /Name:"!DEST_NAME!" /Description:"!DEST_NAME!" >nul
         )
     )
 )
-endlocal
 
 echo.
 echo [3/5] Configuring Legacy BIOS BCD menu...
-set "BCD_BIOS=%MAIN_DIR%\boot\bcd"
+set "BCD_BIOS=!MAIN_DIR!\boot\bcd"
 
-:: Safely clean old entries FIRST
-for /f "tokens=2 delims={}" %%g in ('bcdedit /store "%BCD_BIOS%" /enum OSLOADER ^| findstr "{"') do (
-    if /i not "%%g"=="ramdiskoptions" bcdedit /store "%BCD_BIOS%" /delete {%%g} /f >nul 2>&1
+for /f "tokens=2 delims={}" %%g in ('bcdedit /store "!BCD_BIOS!" /enum OSLOADER ^| findstr "{"') do (
+    if /i not "%%g"=="ramdiskoptions" bcdedit /store "!BCD_BIOS!" /delete {%%g} /f >nul 2>&1
 )
 
-:: Create ramdiskoptions AFTER cleaning
-bcdedit /store "%BCD_BIOS%" /create {ramdiskoptions} >nul 2>&1
-bcdedit /store "%BCD_BIOS%" /set {ramdiskoptions} ramdisksdidevice boot >nul
-bcdedit /store "%BCD_BIOS%" /set {ramdiskoptions} ramdisksdipath \boot\boot.sdi >nul
+bcdedit /store "!BCD_BIOS!" /create {ramdiskoptions} >nul 2>&1
+bcdedit /store "!BCD_BIOS!" /set {ramdiskoptions} ramdisksdidevice boot >nul
+bcdedit /store "!BCD_BIOS!" /set {ramdiskoptions} ramdisksdipath \boot\boot.sdi >nul
 
-for /f "tokens=2 delims={}" %%a in ('bcdedit /store "%BCD_BIOS%" /create /d "%BOOT_NAME_MAIN%" /application osloader') do set "GUID_MAIN=%%a"
-bcdedit /store "%BCD_BIOS%" /set {%GUID_MAIN%} device ramdisk=[boot]\sources\boot-main.wim,{ramdiskoptions} >nul
-bcdedit /store "%BCD_BIOS%" /set {%GUID_MAIN%} osdevice ramdisk=[boot]\sources\boot-main.wim,{ramdiskoptions} >nul
-bcdedit /store "%BCD_BIOS%" /set {%GUID_MAIN%} path \windows\system32\boot\winload.exe >nul
-bcdedit /store "%BCD_BIOS%" /set {%GUID_MAIN%} systemroot \windows >nul
-bcdedit /store "%BCD_BIOS%" /set {%GUID_MAIN%} winpe yes >nul
-bcdedit /store "%BCD_BIOS%" /set {%GUID_MAIN%} detecthal yes >nul
-bcdedit /store "%BCD_BIOS%" /displayorder {%GUID_MAIN%} /addlast >nul
+for /f "tokens=2 delims={}" %%a in ('bcdedit /store "!BCD_BIOS!" /create /d "!BOOT_NAME_MAIN!" /application osloader') do set "GUID_MAIN=%%a"
+bcdedit /store "!BCD_BIOS!" /set {!GUID_MAIN!} device ramdisk=[boot]\sources\boot-main.wim,{ramdiskoptions} >nul
+bcdedit /store "!BCD_BIOS!" /set {!GUID_MAIN!} osdevice ramdisk=[boot]\sources\boot-main.wim,{ramdiskoptions} >nul
+bcdedit /store "!BCD_BIOS!" /set {!GUID_MAIN!} path \windows\system32\boot\winload.exe >nul
+bcdedit /store "!BCD_BIOS!" /set {!GUID_MAIN!} systemroot \windows >nul
+bcdedit /store "!BCD_BIOS!" /set {!GUID_MAIN!} winpe yes >nul
+bcdedit /store "!BCD_BIOS!" /set {!GUID_MAIN!} detecthal yes >nul
+bcdedit /store "!BCD_BIOS!" /displayorder {!GUID_MAIN!} /addlast >nul
 
-for /f "tokens=2 delims={}" %%a in ('bcdedit /store "%BCD_BIOS%" /create /d "%BOOT_NAME_SEC%" /application osloader') do set "GUID_SEC=%%a"
-bcdedit /store "%BCD_BIOS%" /set {%GUID_SEC%} device ramdisk=[boot]\sources\boot-sec.wim,{ramdiskoptions} >nul
-bcdedit /store "%BCD_BIOS%" /set {%GUID_SEC%} osdevice ramdisk=[boot]\sources\boot-sec.wim,{ramdiskoptions} >nul
-bcdedit /store "%BCD_BIOS%" /set {%GUID_SEC%} path \windows\system32\boot\winload.exe >nul
-bcdedit /store "%BCD_BIOS%" /set {%GUID_SEC%} systemroot \windows >nul
-bcdedit /store "%BCD_BIOS%" /set {%GUID_SEC%} winpe yes >nul
-bcdedit /store "%BCD_BIOS%" /set {%GUID_SEC%} detecthal yes >nul
-bcdedit /store "%BCD_BIOS%" /displayorder {%GUID_SEC%} /addlast >nul
+for /f "tokens=2 delims={}" %%a in ('bcdedit /store "!BCD_BIOS!" /create /d "!BOOT_NAME_SEC!" /application osloader') do set "GUID_SEC=%%a"
+bcdedit /store "!BCD_BIOS!" /set {!GUID_SEC!} device ramdisk=[boot]\sources\boot-sec.wim,{ramdiskoptions} >nul
+bcdedit /store "!BCD_BIOS!" /set {!GUID_SEC!} osdevice ramdisk=[boot]\sources\boot-sec.wim,{ramdiskoptions} >nul
+bcdedit /store "!BCD_BIOS!" /set {!GUID_SEC!} path \windows\system32\boot\winload.exe >nul
+bcdedit /store "!BCD_BIOS!" /set {!GUID_SEC!} systemroot \windows >nul
+bcdedit /store "!BCD_BIOS!" /set {!GUID_SEC!} winpe yes >nul
+bcdedit /store "!BCD_BIOS!" /set {!GUID_SEC!} detecthal yes >nul
+bcdedit /store "!BCD_BIOS!" /displayorder {!GUID_SEC!} /addlast >nul
 echo Legacy BIOS menu configured successfully.
 
 echo.
 echo [4/5] Configuring UEFI BCD menu...
-set "BCD_UEFI=%MAIN_DIR%\efi\microsoft\boot\bcd"
+set "BCD_UEFI=!MAIN_DIR!\efi\microsoft\boot\bcd"
 
-:: Safely clean old entries FIRST
-for /f "tokens=2 delims={}" %%g in ('bcdedit /store "%BCD_UEFI%" /enum OSLOADER ^| findstr "{"') do (
-    if /i not "%%g"=="ramdiskoptions" bcdedit /store "%BCD_UEFI%" /delete {%%g} /f >nul 2>&1
+for /f "tokens=2 delims={}" %%g in ('bcdedit /store "!BCD_UEFI!" /enum OSLOADER ^| findstr "{"') do (
+    if /i not "%%g"=="ramdiskoptions" bcdedit /store "!BCD_UEFI!" /delete {%%g} /f >nul 2>&1
 )
 
-:: Create ramdiskoptions AFTER cleaning
-bcdedit /store "%BCD_UEFI%" /create {ramdiskoptions} >nul 2>&1
-bcdedit /store "%BCD_UEFI%" /set {ramdiskoptions} ramdisksdidevice boot >nul
-bcdedit /store "%BCD_UEFI%" /set {ramdiskoptions} ramdisksdipath \boot\boot.sdi >nul
+bcdedit /store "!BCD_UEFI!" /create {ramdiskoptions} >nul 2>&1
+bcdedit /store "!BCD_UEFI!" /set {ramdiskoptions} ramdisksdidevice boot >nul
+bcdedit /store "!BCD_UEFI!" /set {ramdiskoptions} ramdisksdipath \boot\boot.sdi >nul
 
-for /f "tokens=2 delims={}" %%a in ('bcdedit /store "%BCD_UEFI%" /create /d "%BOOT_NAME_MAIN%" /application osloader') do set "GUID_MAIN_U=%%a"
-bcdedit /store "%BCD_UEFI%" /set {%GUID_MAIN_U%} device ramdisk=[boot]\sources\boot-main.wim,{ramdiskoptions} >nul
-bcdedit /store "%BCD_UEFI%" /set {%GUID_MAIN_U%} osdevice ramdisk=[boot]\sources\boot-main.wim,{ramdiskoptions} >nul
-bcdedit /store "%BCD_UEFI%" /set {%GUID_MAIN_U%} path \windows\system32\winload.efi >nul
-bcdedit /store "%BCD_UEFI%" /set {%GUID_MAIN_U%} systemroot \windows >nul
-bcdedit /store "%BCD_UEFI%" /set {%GUID_MAIN_U%} winpe yes >nul
-bcdedit /store "%BCD_UEFI%" /set {%GUID_MAIN_U%} detecthal yes >nul
-bcdedit /store "%BCD_UEFI%" /displayorder {%GUID_MAIN_U%} /addlast >nul
+for /f "tokens=2 delims={}" %%a in ('bcdedit /store "!BCD_UEFI!" /create /d "!BOOT_NAME_MAIN!" /application osloader') do set "GUID_MAIN_U=%%a"
+bcdedit /store "!BCD_UEFI!" /set {!GUID_MAIN_U!} device ramdisk=[boot]\sources\boot-main.wim,{ramdiskoptions} >nul
+bcdedit /store "!BCD_UEFI!" /set {!GUID_MAIN_U!} osdevice ramdisk=[boot]\sources\boot-main.wim,{ramdiskoptions} >nul
+bcdedit /store "!BCD_UEFI!" /set {!GUID_MAIN_U!} path \windows\system32\winload.efi >nul
+bcdedit /store "!BCD_UEFI!" /set {!GUID_MAIN_U!} systemroot \windows >nul
+bcdedit /store "!BCD_UEFI!" /set {!GUID_MAIN_U!} winpe yes >nul
+bcdedit /store "!BCD_UEFI!" /set {!GUID_MAIN_U!} detecthal yes >nul
+bcdedit /store "!BCD_UEFI!" /displayorder {!GUID_MAIN_U!} /addlast >nul
 
-for /f "tokens=2 delims={}" %%a in ('bcdedit /store "%BCD_UEFI%" /create /d "%BOOT_NAME_SEC%" /application osloader') do set "GUID_SEC_U=%%a"
-bcdedit /store "%BCD_UEFI%" /set {%GUID_SEC_U%} device ramdisk=[boot]\sources\boot-sec.wim,{ramdiskoptions} >nul
-bcdedit /store "%BCD_UEFI%" /set {%GUID_SEC_U%} osdevice ramdisk=[boot]\sources\boot-sec.wim,{ramdiskoptions} >nul
-bcdedit /store "%BCD_UEFI%" /set {%GUID_SEC_U%} path \windows\system32\winload.efi >nul
-bcdedit /store "%BCD_UEFI%" /set {%GUID_SEC_U%} systemroot \windows >nul
-bcdedit /store "%BCD_UEFI%" /set {%GUID_SEC_U%} winpe yes >nul
-bcdedit /store "%BCD_UEFI%" /set {%GUID_SEC_U%} detecthal yes >nul
-bcdedit /store "%BCD_UEFI%" /displayorder {%GUID_SEC_U%} /addlast >nul
+for /f "tokens=2 delims={}" %%a in ('bcdedit /store "!BCD_UEFI!" /create /d "!BOOT_NAME_SEC!" /application osloader') do set "GUID_SEC_U=%%a"
+bcdedit /store "!BCD_UEFI!" /set {!GUID_SEC_U!} device ramdisk=[boot]\sources\boot-sec.wim,{ramdiskoptions} >nul
+bcdedit /store "!BCD_UEFI!" /set {!GUID_SEC_U!} osdevice ramdisk=[boot]\sources\boot-sec.wim,{ramdiskoptions} >nul
+bcdedit /store "!BCD_UEFI!" /set {!GUID_SEC_U!} path \windows\system32\winload.efi >nul
+bcdedit /store "!BCD_UEFI!" /set {!GUID_SEC_U!} systemroot \windows >nul
+bcdedit /store "!BCD_UEFI!" /set {!GUID_SEC_U!} winpe yes >nul
+bcdedit /store "!BCD_UEFI!" /set {!GUID_SEC_U!} detecthal yes >nul
+bcdedit /store "!BCD_UEFI!" /displayorder {!GUID_SEC_U!} /addlast >nul
 echo UEFI menu configured successfully.
+
 echo.
 echo [5/5] Packaging files into a dual bootable ISO image...
 
-:: Check if oscdimg.exe exists, if not attempt to download
 if not exist "%~dp0oscdimg.exe" (
     powershell -Command "Write-Host 'Oscdimg missing. Attempting download...' -ForegroundColor DarkYellow"
     powershell -Command "Start-BitsTransfer -Source 'https://msdl.microsoft.com/download/symbols/oscdimg.exe/688CABB065000/oscdimg.exe' -Destination '%~dp0'"
 )
 
-:: Validate if oscdimg is available before proceeding
 if not exist "%~dp0oscdimg.exe" (
     echo ERROR: Oscdimg.exe could not be found or downloaded.
     pause
-    exit /b 1
+    goto inf
 )
 
 :: Run ISO creation (using current directory oscdimg.exe)
-"%~dp0oscdimg.exe" -bootdata:2#p0,e,b"%MAIN_DIR%\boot\etfsboot.com"#pEF,e,b"%MAIN_DIR%\efi\microsoft\boot\efisys.bin" -o -h -m -u2 -udfver102 "%MAIN_DIR%" "%OUTPUT_ISO%"
+"%~dp0oscdimg.exe" -bootdata:2#p0,e,b"!MAIN_DIR!\boot\etfsboot.com"#pEF,e,b"!MAIN_DIR!\efi\microsoft\boot\efisys.bin" -o -h -m -u2 -udfver102 "!MAIN_DIR!" "!OUTPUT_ISO!"
 
 if errorlevel 1 (
     echo ERROR: Failed to create ISO image!
     pause
-    exit /b 1
+    goto rest
 )
 
-echo.
 echo =======================================================
 echo  SUCCESS! ALL STEPS COMPLETED.
-powershell -Command "Write-Host 'Your ISO is ready at: %OUTPUT_ISO%' -ForegroundColor Yellow"
+powershell -Command "Write-Host 'Your ISO is ready at: !OUTPUT_ISO!' -ForegroundColor Yellow"
 echo =======================================================
+
+:rest
+echo Restoring original boot.wim and cleaning up temporary files...
+if exist "!MAIN_DIR!\sources\boot-main.wim" move /Y "!MAIN_DIR!\sources\boot-main.wim" "!MAIN_DIR!\sources\boot.wim" >nul
+if exist "!MAIN_DIR!\sources\boot-sec.wim" del /Q "!MAIN_DIR!\sources\boot-sec.wim" >nul
+if exist "!MAIN_DIR!\sources\!LANG_CULTURE!" rd /s /q "!MAIN_DIR!\sources\!LANG_CULTURE!" >nul
+echo.
 pause
-set "Fullpath=%SEC_DIR%"
+set "Fullpath=!SEC_DIR!"
 goto inf
