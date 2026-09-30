@@ -6,14 +6,28 @@ if "%LATEST_RELEASE%"=="" set "LATEST_RELEASE=OFFLINE"
 if not "%LATEST_RELEASE%"=="OFFLINE" (
     powershell -NoProfile -Command "$curr = [version]('%CURRENT_VER%' -replace '[^0-9.]'); $latest = [version]('%LATEST_RELEASE%' -replace '[^0-9.]'); if ($curr -lt $latest) { exit 0 } else { exit 1 }" >nul 2>&1
     if not errorlevel 1 set "warn=! ! !")
-:: GotAdmin-------------------------------
-ECHO Checking for admin...
-reg query HKU\S-1-5-19 1>nul 2>nul && goto :gotAdmin
-if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
+::---GotAdmin----------------------------------
+REM  --> Check for permissions
+>nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+
+REM --> If error flag set, we do not have admin.
+if '%errorlevel%' NEQ '0' (
+    echo Requesting administrative privileges...
+    goto UACPrompt
+) else ( goto gotAdmin )
+
+:UACPrompt
+    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
+    set params = %*:"="
+    echo UAC.ShellExecute "cmd.exe", "/c %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs"
+
+    "%temp%\getadmin.vbs"
+    del "%temp%\getadmin.vbs"
+    exit /B
+
 :gotAdmin
-PUSHD "%~dp0"
-CD /D "%CD%"
-@CLS
+    pushd "%CD%"
+    CD /D "%~dp0"
 ::--------------------------------------
 title  Core_distribution_modifier v%CURRENT_VER% ^| GitHub: %LATEST_RELEASE% %warn%
 @echo off
@@ -1079,7 +1093,7 @@ powershell write-host -fore darkyellow  Opening folder browser for Secondary ISO
 for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "%psCommand%"`) do set "SEC_DIR=%%I"
 
 :: 3. Graphical input box for LANG
-for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter language code Like ru,es,de:', 'Language Secondary', 'bg')"`) do set "LANG=%%I"
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter language code (ru, en, de) :', 'Language Secondary', 'bg')"`) do set "LANG=%%I"
 
 :: 4. Graphical input box for BOOT_NAME_MAIN
 for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('Enter Main Boot Menu Display Name:', 'Main Boot Name', 'Windows Setup Primary')"`) do set "BOOT_NAME_MAIN=%%I"
@@ -1338,8 +1352,11 @@ bcdedit /store "!BCD_BIOS!" /set {!GUID_SEC!} winpe yes >nul
 bcdedit /store "!BCD_BIOS!" /set {!GUID_SEC!} detecthal yes >nul
 bcdedit /store "!BCD_BIOS!" /displayorder {!GUID_SEC!} /addlast >nul
 
-bcdedit /store "!BCD_BIOS!" /timeout 20 >nul
-bcdedit /store "!BCD_BIOS!" /default {!GUID_MAIN!} >nul
+:: Explicitly configure Boot Manager parameters to suppress 30s timeout fallback
+bcdedit /store "!BCD_BIOS!" /set {bootmgr} default {!GUID_MAIN!} >nul
+bcdedit /store "!BCD_BIOS!" /set {bootmgr} displaybootmenu yes >nul
+bcdedit /store "!BCD_BIOS!" /set {bootmgr} timeout 0 >nul
+
 echo Legacy BIOS menu configured successfully.
 
 echo.
@@ -1376,8 +1393,11 @@ bcdedit /store "!BCD_UEFI!" /set {!GUID_SEC_U!} winpe yes >nul
 bcdedit /store "!BCD_UEFI!" /set {!GUID_SEC_U!} detecthal yes >nul
 bcdedit /store "!BCD_UEFI!" /displayorder {!GUID_SEC_U!} /addlast >nul
 
-bcdedit /store "!BCD_UEFI!" /timeout 10 >nul
-bcdedit /store "!BCD_UEFI!" /default {!GUID_MAIN_U!} >nul
+:: Explicitly configure Boot Manager parameters to suppress 30s timeout fallback
+bcdedit /store "!BCD_UEFI!" /set {bootmgr} default {!GUID_MAIN_U!} >nul
+bcdedit /store "!BCD_UEFI!" /set {bootmgr} displaybootmenu yes >nul
+bcdedit /store "!BCD_UEFI!" /set {bootmgr} timeout 0 >nul
+
 echo UEFI menu configured successfully.
 
 :: Delete transient lock/journal files before passing directory to Oscdimg
