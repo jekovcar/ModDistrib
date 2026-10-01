@@ -1,5 +1,5 @@
 @echo off
-set "CURRENT_VER=0.8.8"
+set "CURRENT_VER=0.8.9"
 for /f "delims=" %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/jekovcar/ModDistrib/releases/latest').tag_name" 2^>nul') do (
     set "LATEST_RELEASE=%%i")
 if "%LATEST_RELEASE%"=="" set "LATEST_RELEASE=OFFLINE"
@@ -1326,6 +1326,14 @@ set "BCD_BIOS=!MAIN_DIR!\boot\bcd"
 reg unload HKLM\BCD00000000 >nul 2>&1
 attrib -h -s -r "!MAIN_DIR!\boot\bcd*" /s /d >nul 2>&1
 
+:: Backup BIOS BCD if backup does not already exist
+if exist "!BCD_BIOS!" (
+    if not exist "!BCD_BIOS!.bak" (
+        echo Backing up BIOS BCD to bcd.bak...
+        copy /y "!BCD_BIOS!" "!BCD_BIOS!.bak" >nul
+    )
+)
+
 for /f "tokens=2 delims={}" %%g in ('bcdedit /store "!BCD_BIOS!" /enum OSLOADER ^| findstr "{"') do (
     if /i not "%%g"=="ramdiskoptions" bcdedit /store "!BCD_BIOS!" /delete {%%g} /f >nul 2>&1
 )
@@ -1366,6 +1374,14 @@ set "BCD_UEFI=!MAIN_DIR!\efi\microsoft\boot\bcd"
 :: Release registry locks & clear file attributes on UEFI BCD
 reg unload HKLM\BCD00000000 >nul 2>&1
 attrib -h -s -r "!MAIN_DIR!\efi\microsoft\boot\bcd*" /s /d >nul 2>&1
+
+:: Backup UEFI BCD if backup does not already exist
+if exist "!BCD_UEFI!" (
+    if not exist "!BCD_UEFI!.bak" (
+        echo Backing up UEFI BCD to bcd.bak...
+        copy /y "!BCD_UEFI!" "!BCD_UEFI!.bak" >nul
+    )
+)
 
 for /f "tokens=2 delims={}" %%g in ('bcdedit /store "!BCD_UEFI!" /enum OSLOADER ^| findstr "{"') do (
     if /i not "%%g"=="ramdiskoptions" bcdedit /store "!BCD_UEFI!" /delete {%%g} /f >nul 2>&1
@@ -1438,7 +1454,24 @@ powershell -Command "Write-Host 'Your ISO is ready at: !OUTPUT_ISO!' -Foreground
 echo =======================================================
 
 :rest
-echo Restoring original boot.wim and cleaning up temporary files...
+echo Restoring original boot files, BCD stores, and cleaning up temporary files...
+reg unload HKLM\BCD00000000 >nul 2>&1
+
+:: Restore BIOS BCD
+if exist "!MAIN_DIR!\boot\bcd.bak" (
+    move /y "!MAIN_DIR!\boot\bcd.bak" "!MAIN_DIR!\boot\bcd" >nul
+)
+
+:: Restore UEFI BCD
+if exist "!MAIN_DIR!\efi\microsoft\boot\bcd.bak" (
+    move /y "!MAIN_DIR!\efi\microsoft\boot\bcd.bak" "!MAIN_DIR!\efi\microsoft\boot\bcd" >nul
+)
+
+:: Clean up transient BCD log files created by BCDEdit operations
+del /f /q /a "!MAIN_DIR!\boot\bcd.LOG*" >nul 2>&1
+del /f /q /a "!MAIN_DIR!\efi\microsoft\boot\bcd.LOG*" >nul 2>&1
+
+:: Restore original boot.wim and remove added setup assets
 if exist "!MAIN_DIR!\sources\boot-main.wim" move /Y "!MAIN_DIR!\sources\boot-main.wim" "!MAIN_DIR!\sources\boot.wim" >nul
 if exist "!MAIN_DIR!\sources\boot-sec.wim" del /Q "!MAIN_DIR!\sources\boot-sec.wim" >nul
 if exist "!MAIN_DIR!\sources\!LANG_CULTURE!" rd /s /q "!MAIN_DIR!\sources\!LANG_CULTURE!" >nul
