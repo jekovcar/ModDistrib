@@ -1,35 +1,35 @@
 # ModDistrib
 <br>The following options are available for Windows 10.11 distributions:
-<br>1.Mount an ISO image or folder to extract (without selecting) or replace core files(kernel32.dll,kernel32.reg).
-<br>----->_Based on an idea by **Darkhorse1870**(forum.ru-board)_
-<br>2.Export/import the install WIM file index
-<br>3.Export/import the boot WIM file index
-<br>4.Batch Delete the install WIM file index
-<br>5.Batch Export ESD to WIM
-<br>6.Batch Convert WIM to ESD
-<br>7.Detailed information about the install WIM file index
-<br>8.Auto unmount previous mounted image, auto remove broken mount points
-<br>9.Import a install WIM file into a distribution
+<br>1. Mount an ISO image or folder to extract (without selecting) or replace core files(kernel32.dll,kernel32.reg).
+<br>-----_Based on an idea by **Darkhorse1870**(forum.ru-board)_
+<br>2. Export/import the install WIM file index
+<br>3. Export/import the boot WIM file index
+<br>4. Batch Delete the install WIM file index
+<br>5. Batch Export ESD to WIM
+<br>6. Batch Convert WIM to ESD
+<br>7. Detailed information about the install WIM file index
+<br>8. Auto unmount previous mounted image, auto remove broken mount points
+<br>9. Import a install WIM file into a distribution
 <br>10.Import a boot WIM file into a distribution
-<br>11.Detailed information about the imported install/boot WIM file index
-<br>12.Delete the distribution's boot WIM file index
-<br>13.Make Boot Iso from folder distribution
-<br>14.Bypass install hardware restrictions (TPM)
-<br>15.Bypass install automatic updates, enable local account & Windows 11 Internet Requirement (NRO)
-<br>16.Add/Remove package updates(not SPaks) to Install.wim image (ModDistrib script autorename them possible for add capability)
-<br>----->Names of Features(x64) must be ended: Package~'PublicTokenKey'~amd64~~.cab(PTK of the cab build)
-<br>17.Add/Remove package Capabilities(Features) to Install.wim image
-<br>----->Names of Capability(x64) must be ended: Package~'PublicTokenKey'~amd64~~.cab(PTK of the cab build)
-<br>18.Add/Remove package updates to Boot.wim image
-<br>19.Add an option to set default Language of OS for install.wim, after addition Lang UpdPaks(xx-xx lang code):
-<br>----->Microsoft-Windows-Client-LanguagePack-Package_xx-xx.cab. Accordingly Dism generate lang.ini to Distributive.
-<br>20.Add an option to set default Language of Setup WinPE, after addition UpdPaks:
-<br>----->WinPE_OCs\xx-xx\lp.cab
-<br>----->WinPE-Setup_xx-xx.cab
-<br>----->WinPE-Setup-Client_xx-xx.cab
-<br>21.Add an option Rename image of wim(install/boot.wim)
-<br>22.Add an option apply unattend.xml to image(install.wim) and validate xml structure error
-<br>23.Added the ability to create a dual-boot ISO image based on two distributions(MSDN/upd) of the same version and in two languages.
+<br>11. Detailed information about the imported install/boot WIM file index
+<br>12. Delete the distribution's boot WIM file index
+<br>13. Make Boot Iso from folder distribution
+<br>14. Bypass install hardware restrictions (TPM)
+<br>15. Bypass install automatic updates, enable local account & Windows 11 Internet Requirement (NRO)
+<br>16. Add/Remove package updates(not SPaks) to Install.wim image (ModDistrib script autorename them possible for add capability)
+<br>-----_Names of Features(x64) must be ended: Package~'PublicTokenKey'~amd64~~.cab(PTK of the cab build)_
+<br>17. Add/Remove package Capabilities(Features) to Install.wim image
+<br>-----_Names of Capability(x64) must be ended: Package~'PublicTokenKey'~amd64~~.cab(PTK of the cab build)_
+<br>18. Add/Remove package updates to Boot.wim image
+<br>19. Add an option to set default Language of OS for install.wim, after addition Lang UpdPaks(xx-xx lang code):
+<br>-----_Microsoft-Windows-Client-LanguagePack-Package_xx-xx.cab. Accordingly Dism generate lang.ini to Distributive_.
+<br>20. Add an option to set default Language of Setup WinPE, after addition UpdPaks:
+<br>-----_WinPE_OCs\xx-xx\lp.cab_
+<br>-----_WinPE-Setup_xx-xx.cab_
+<br>-----_WinPE-Setup-Client_xx-xx.cab_
+<br>21. Add an option Rename image of wim(install/boot.wim)
+<br>22. Add an option apply unattend.xml to image(install.wim) and validate xml structure error
+<br>23. Added the ability to create a dual-boot ISO image based on two distributions(MSDN/upd) of the same version and in two languages.
 
 # Reference
 <p2>Function build ISO file [MSDN libr](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options?view=windows-11)
