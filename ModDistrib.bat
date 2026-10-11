@@ -113,7 +113,7 @@ set esd=
 for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'Install ESD (*.esd)|*.esd|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
 ') do set esd=%%i
 IF NOT DEFINED esd (
-    ECHO NOT Choiced ESD to import & goto por
+    ECHO NOT Choiced ESD to import & goto inf
 ) ELSE (
 powershell write-host -fore yellow Choosed Wim: %esd%
 dism /get-wiminfo /wimfile:"%esd%"
@@ -169,10 +169,17 @@ powershell write-host -fore cyan PS window '''keep AWAKE''' was closed.
 powershell write-host -fore yellow WIM to ESD  of Index:%sein% was converted ! & goto inf
 
 :inf
-if exist "%Fullpath%\sources\install.esd" echo --------------------ESD Info------------------------------ & dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.esd"
-echo.--------------------Install Wim Info------------------------------
-dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
-::--------------------boot wim Info----------------------
+if exist "%Fullpath%\sources\install.esd" echo. & echo.--------------------ESD WIM Info-------------------- & dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.esd"
+echo.
+echo.--------------------Install Wim Info---------------------
+if not exist "%Fullpath%\sources\Install.wim" goto :install_error
+powershell -Command "$ProgressPreference = 'SilentlyContinue'; dism /get-wiminfo /wimfile:'%Fullpath%\sources\install.wim'"
+if %ERRORLEVEL% equ 0 goto boot_inf
+:install_error
+powershell -Command "Write-Host 'Install wim is missed or modifyed' -ForegroundColor Red"
+:boot_inf
+echo.
+echo.--------------------boot wim Info--------------------
 if not exist "%Fullpath%\sources\boot.wim" goto :boot_error
 powershell -Command "$ProgressPreference = 'SilentlyContinue'; $out = dism /get-wiminfo /wimfile:'%Fullpath%\sources\boot.wim'; if ($LASTEXITCODE -ne 0 -or -not $out) { exit 1 }; $out | ForEach-Object { if ($_ -match 'Index\s*:\s*\d+') { Write-Host $_ -ForegroundColor Cyan } elseif ($_ -match 'Name\s*:') { Write-Host $_ -ForegroundColor Green } elseif ($_ -match 'Size\s*:') { Write-Host $_ -ForegroundColor Yellow } else { Write-Host $_ } }"
 if %ERRORLEVEL% equ 0 goto sel
@@ -180,7 +187,7 @@ if %ERRORLEVEL% equ 0 goto sel
 powershell -Command "Write-Host 'boot wim is missed or modifyed' -ForegroundColor Red"
 
 :sel
-echo.--------------------Menu------------------------------
+echo.------------------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
 @echo Mod Distr(M),Exp/Imp/Ren Distr(E),Remove index Distr(R),Export ESD^>WIM(S),BypassTPM(P),BypassNRO(F)
 @echo Convert Wim^>ESD(C),Detinfo Distr(I),Make Iso(N),Upd/Mod Install(U),Upd/Mod Boot(W),Dual-Boot Iso(L),Back(B)?
