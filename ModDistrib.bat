@@ -1,5 +1,5 @@
 @echo off
-set "CURRENT_VER=0.8.9"
+set "CURRENT_VER=0.9.0"
 for /f "delims=" %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/jekovcar/ModDistrib/releases/latest').tag_name" 2^>nul') do (
     set "LATEST_RELEASE=%%i")
 if "%LATEST_RELEASE%"=="" set "LATEST_RELEASE=OFFLINE"
@@ -105,23 +105,25 @@ for %%I in ("%Fullpath%\.") do set "isoName=%%~nxI"
 for %%i in ("%Fullpath%.") do set "out=%%~dpi"
 powershell write-host -fore yellow OutDir : %out%
 if exist "%Fullpath%\sources\install.wim" goto inf
+
 :esd
-if not exist "%Fullpath%\sources\install.esd" powershell write-host -fore yellow Dir %Fullpath%\sources not contain install.esd & goto sel
-echo.--------------------ESD Info------------------------------
-if exist "%Fullpath%\sources\install.esd" dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.esd" & echo 'install.esd' will convert to 'install.wim'
+echo.
+powershell write-host -fore darkyellow Pls, choose Install.ESD for Export:
+set esd=
+for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'Install ESD (*.esd)|*.esd|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
+') do set esd=%%i
+IF NOT DEFINED esd (
+    ECHO NOT Choiced ESD to import & goto por
+) ELSE (
+powershell write-host -fore yellow Choosed Wim: %esd%
+dism /get-wiminfo /wimfile:"%esd%"
+)
 
-:esdc
-SET choice=
-SET /p "choice=Enter(cont.)/M(Menu): "
-IF /i '%choice%'=='M' goto sel
-IF /i '%choice%'=='' goto esw
-goto esdc
-
-:esw
 echo ----------Export ESD index to WIM image-------------
-echo Enter indexes separated by spaces,like(5, 1, 2) : 
+set rein=
+echo Enter ESD indexes separated by spaces,like(5, 1, 2) : 
 set /p rein=
-if "%rein%"=="" powershell write-host -fore darkyellow NOT Enter Value & goto esw
+if "%rein%"=="" powershell write-host -fore darkyellow NOT Entered Value & goto sel
 powershell write-host -fore darkgray Sorting...
 for /f "delims=" %%i in ('powershell -Command "('%rein%,' -split ' ' | Sort { [int]$_ }) -join ' '"') do set sein=%%i
 powershell write-host -fore yellow Selected ESD to Wim Index: '%sein%'
@@ -129,21 +131,23 @@ powershell write-host -fore cyan Will open minimized PS window '''keep AWAKE''' 
 pause
 start /min powershell -WindowStyle Minimized -Command "$Host.UI.RawUI.WindowTitle = 'Keep AWAKE'; $w = New-Object -ComObject WScript.Shell; while($true) { $w.SendKeys('{SCROLLLOCK}'); Start-Sleep -Seconds 60 }"pause
 
-set i=0
-for %%a in (%sein%) do (
+set i=0 
+ for %%a in (%sein%) do (
     set /a i+=1
-DISM /Export-Image /SourceImageFile:"%Fullpath%\sources\install.esd" /SourceIndex:%%a /DestinationImageFile:"%Fullpath%\sources\install.wim" /Compress:fast
-powershell write-host -fore darkyellow ESD Index:%%a was converted
- )
+    DISM /Export-Image /SourceImageFile:"%esd%" /SourceIndex:%%a /DestinationImageFile:"%Fullpath%\sources\install.wim" /Compress:fast
+    powershell write-host -fore darkyellow ESD Index:%%a was converted
+)
+ 
 echo.
 taskkill /IM powershell.exe /F > nul
 powershell write-host -fore cyan PS window '''keep AWAKE''' was closed.
-powershell write-host -fore yellow ESD to WIM of Index:%sein% was converted ! & goto inf
+powershell write-host -fore yellow ESD to WIM of Index:%sein% was Exported ! & goto inf
 :con
 echo ----------Convert Wim index to ESD image-------------
-echo Enter indexes separated by spaces,like(5, 1, 2) : 
+set rein=
+echo Enter WIM indexes separated by spaces,like(5, 1, 2) : 
 set /p rein=
-if "%rein%"=="" powershell write-host -fore darkyellow NOT Enter Value & goto con
+if "%rein%"=="" powershell write-host -fore darkyellow NOT Enter Value & goto sel
 powershell write-host -fore darkgray Sorting...
 for /f "delims=" %%i in ('powershell -Command "('%rein%,' -split ' ' | Sort { [int]$_ }) -join ' '"') do set sein=%%i
 powershell write-host -fore yellow Selected WIM to ESD Index: '%sein%'
@@ -166,7 +170,7 @@ powershell write-host -fore yellow WIM to ESD  of Index:%sein% was converted ! &
 
 :inf
 if exist "%Fullpath%\sources\install.esd" echo --------------------ESD Info------------------------------ & dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.esd"
-echo.--------------------Wim Info------------------------------
+echo.--------------------Install Wim Info------------------------------
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
 ::--------------------boot wim Info----------------------
 if not exist "%Fullpath%\sources\boot.wim" goto :boot_error
@@ -245,16 +249,17 @@ if %errorlevel% equ 0 (
 goto sel
 :del
 echo ----------Remove image of index-------------
+set rein=
 echo Enter install indexes separated by spaces,like(5, 1, 2) : 
 set /p rein=
-if "%rein%"=="" powershell write-host -fore darkyellow NOT Enter Value & goto del
+if "%rein%"=="" powershell write-host -fore darkyellow NOT Enter Value & goto sel
 powershell write-host -fore darkgray Sorting...
 for /f "delims=" %%i in ('powershell -Command "('%rein%,' -split ' ' | Sort { [int]$_ }) -join ' '"') do set sein=%%i
 powershell write-host -fore yellow Selected WIM index to remove: '%sein%'
 for /f "delims=" %%i in ('powershell -Command "('%rein%,' -split ' ' | Sort-Object -Descending { [int]$_ }) -join ' '"') do set ein=%%i
 pause
 set i=0
-for %%a in (%ein%) do (
+for %%a in (%sein%) do (
     set /a i+=1
 dism /Delete-Image /ImageFile:"%Fullpath%\sources\install.wim" /Index:%%a
 powershell write-host -fore darkyellow Index:%%a was removed
