@@ -109,7 +109,8 @@ if exist "%Fullpath%\sources\install.wim" goto inf
 :esd
 echo.
 IF NOT EXIST "%Fullpath%\sources\install.esd" GOTO esds
-powershell write-host -fore yellow Selected path: "%Fullpath%\sources\install.esd"
+SET "esd=%Fullpath%\sources\install.esd"
+powershell write-host -fore yellow Selected path: "%esd%"
 SET choice=
 SET /p "choice=Enter(cont.)/S(select ESD): "
 IF /i "%choice%"=="S" goto esds
@@ -124,12 +125,12 @@ IF NOT DEFINED esd (
     ECHO NOT Choiced ESD to import & goto inf
 ) ELSE (
 powershell write-host -fore yellow Choosed Wim: %esd%
-dism /get-wiminfo /wimfile:"%esd%"
 )
 for %%i in ("%esd%\..\..") do set "Fullpath=%%~fi"
 :esdex
+dism /get-wiminfo /wimfile:"%esd%"
 echo ----------Export ESD index to WIM image-------------
-If exist "%Fullpath%\sources\install.wim" powershell write-host -fore darkyellow Destination wim Image exist. Empty to Menu.
+If exist "%Fullpath%\sources\install.wim" powershell write-host -fore darkyellow Destination wim Image exists and will be overwritten. Empty to Menu.
 set rein=
 echo Enter ESD indexes separated by spaces,like(5, 1, 2) : 
 set /p rein=
@@ -139,6 +140,7 @@ for /f "delims=" %%i in ('powershell -Command "('%rein%,' -split ' ' | Sort { [i
 powershell write-host -fore yellow Selected ESD to Wim Index: '%sein%'
 powershell write-host -fore cyan Will open minimized PS window '''keep AWAKE''' to prevent Sleep.
 pause
+if exist "%Fullpath%\sources\install.wim" del /f /q "%Fullpath%\sources\install.wim" 
 start /min powershell -WindowStyle Minimized -Command "$Host.UI.RawUI.WindowTitle = 'Keep AWAKE'; $w = New-Object -ComObject WScript.Shell; while($true) { $w.SendKeys('{SCROLLLOCK}'); Start-Sleep -Seconds 60 }"pause
 
 set i=0 
