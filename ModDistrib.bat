@@ -112,9 +112,10 @@ IF NOT EXIST "%Fullpath%\sources\install.esd" GOTO esds
 SET "esd=%Fullpath%\sources\install.esd"
 powershell write-host -fore yellow Selected path: "%esd%"
 SET choice=
-SET /p "choice=Enter(cont.)/S(select ESD): "
+SET /p "choice=Enter(cont.)/S(select ESD)/M(to Menu): "
 IF /i "%choice%"=="S" goto esds
 IF /i "%choice%"=="" goto esdex
+IF /i "%choice%"=="M" goto inf
 goto esd
 :esds
 powershell write-host -fore darkyellow Pls, choose Install.ESD for Export:
@@ -130,7 +131,7 @@ for %%i in ("%esd%\..\..") do set "Fullpath=%%~fi"
 :esdex
 dism /get-wiminfo /wimfile:"%esd%"
 echo ----------Export ESD index to WIM image-------------
-If exist "%Fullpath%\sources\install.wim" powershell write-host -fore darkyellow Destination wim Image exists and will be overwritten. Empty to Menu.
+If exist "%Fullpath%\sources\install.wim" powershell write-host -fore darkyellow 'Destination wim image exists, esd indexes will be imported. Empty to Menu.'
 set rein=
 echo Enter ESD indexes separated by spaces,like(5, 1, 2) : 
 set /p rein=
@@ -140,7 +141,6 @@ for /f "delims=" %%i in ('powershell -Command "('%rein%,' -split ' ' | Sort { [i
 powershell write-host -fore yellow Selected ESD to Wim Index: '%sein%'
 powershell write-host -fore cyan Will open minimized PS window '''keep AWAKE''' to prevent Sleep.
 pause
-if exist "%Fullpath%\sources\install.wim" del /f /q "%Fullpath%\sources\install.wim" 
 start /min powershell -WindowStyle Minimized -Command "$Host.UI.RawUI.WindowTitle = 'Keep AWAKE'; $w = New-Object -ComObject WScript.Shell; while($true) { $w.SendKeys('{SCROLLLOCK}'); Start-Sleep -Seconds 60 }"pause
 
 set i=0 
@@ -188,7 +188,7 @@ if not exist "%Fullpath%\sources\Install.wim" goto :install_error
 powershell -Command "$ProgressPreference = 'SilentlyContinue'; dism /get-wiminfo /wimfile:'%Fullpath%\sources\install.wim'"
 if %ERRORLEVEL% equ 0 goto boot_inf
 :install_error
-powershell -Command "Write-Host 'install.wim is missing. Only Export ESD>WIM is afficiency.' -ForegroundColor Red"
+powershell -Command "Write-Host 'install.wim is missing. Export ESD>WIM is priority.' -ForegroundColor Red"
 :boot_inf
 echo.
 echo.--------------------boot wim Info--------------------
