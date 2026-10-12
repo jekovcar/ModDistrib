@@ -108,6 +108,14 @@ if exist "%Fullpath%\sources\install.wim" goto inf
 
 :esd
 echo.
+IF NOT EXIST "%Fullpath%\sources\install.esd" GOTO esds
+powershell write-host -fore yellow Selected path: "%Fullpath%\sources\install.esd"
+SET choice=
+SET /p "choice=Enter(cont.)/S(select ESD): "
+IF /i "%choice%"=="S" goto esds
+IF /i "%choice%"=="" goto esdex
+goto esd
+:esds
 powershell write-host -fore darkyellow Pls, choose Install.ESD for Export:
 set esd=
 for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'Install ESD (*.esd)|*.esd|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
@@ -119,7 +127,7 @@ powershell write-host -fore yellow Choosed Wim: %esd%
 dism /get-wiminfo /wimfile:"%esd%"
 )
 for %%i in ("%esd%\..\..") do set "Fullpath=%%~fi"
-
+:esdex
 echo ----------Export ESD index to WIM image-------------
 If exist "%Fullpath%\sources\install.wim" powershell write-host -fore darkyellow Destination wim Image exist. Empty to Menu.
 set rein=
