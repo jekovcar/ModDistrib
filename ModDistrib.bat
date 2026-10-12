@@ -47,7 +47,7 @@ if defined mountDir (
     cls
 goto code
 )
-powershell write-host -fore darkyellow "IF NOT select ISO', 'you can Enter path of unpacked distrib"
+powershell write-host -fore darkyellow "IF NOT select ISO', 'Enter path of unpacked distrib', 'Empty to Menu:"
 :start
 set isoPath=
 for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'ISO file (*.iso)|*.iso|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"
@@ -118,9 +118,7 @@ IF NOT DEFINED esd (
 powershell write-host -fore yellow Choosed Wim: %esd%
 dism /get-wiminfo /wimfile:"%esd%"
 )
-for %%i in ("%esd%") do set esdout=%%~dpi
-for %%x in ("%esdout%.") do set "esdup=%%~dpx"
-set Fullpath=%esdup:~0,-1%
+for %%i in ("%esd%\..\..") do set "Fullpath=%%~fi"
 
 echo ----------Export ESD index to WIM image-------------
 If exist "%Fullpath%\sources\install.wim" powershell write-host -fore darkyellow Destination wim Image exist. Empty to Menu.
