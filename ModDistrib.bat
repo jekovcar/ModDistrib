@@ -59,7 +59,7 @@ goto isp
 echo ---------------Path to distrib-----------------------
 set Fullpath=
 set /p Fullpath="Enter Full path distrib(bef.\sources) : "
-if "%Fullpath%"=="" powershell write-host -fore darkyellow Path is Empty & pause & goto start
+if "%Fullpath%"=="" powershell write-host -fore darkyellow Path is Empty & goto inf
 for /F %%I in ('powershell -Command "(Test-Path -Path '%Fullpath%')"') do set TPath=%%I
 If %TPath%==False powershell write-host -fore darkyellow 'Path is Invalid"," Pls to correct "&" enter again.' & powershell write-host -fore darkgray 'Prefer Short Paths without Spaces or invalid characters.' & goto def
 goto fold
@@ -118,12 +118,16 @@ IF NOT DEFINED esd (
 powershell write-host -fore yellow Choosed Wim: %esd%
 dism /get-wiminfo /wimfile:"%esd%"
 )
+for %%i in ("%esd%") do set esdout=%%~dpi
+for %%x in ("%esdout%.") do set "esdup=%%~dpx"
+set Fullpath=%esdup:~0,-1%
 
 echo ----------Export ESD index to WIM image-------------
+If exist "%Fullpath%\sources\install.wim" powershell write-host -fore darkyellow Destination wim Image exist. Empty to Menu.
 set rein=
 echo Enter ESD indexes separated by spaces,like(5, 1, 2) : 
 set /p rein=
-if "%rein%"=="" powershell write-host -fore darkyellow NOT Entered Value & goto sel
+if "%rein%"=="" powershell write-host -fore darkyellow NOT Entered Value & goto inf
 powershell write-host -fore darkgray Sorting...
 for /f "delims=" %%i in ('powershell -Command "('%rein%,' -split ' ' | Sort { [int]$_ }) -join ' '"') do set sein=%%i
 powershell write-host -fore yellow Selected ESD to Wim Index: '%sein%'
@@ -169,14 +173,14 @@ powershell write-host -fore cyan PS window '''keep AWAKE''' was closed.
 powershell write-host -fore yellow WIM to ESD  of Index:%sein% was converted ! & goto inf
 
 :inf
-if exist "%Fullpath%\sources\install.esd" echo. & echo.--------------------ESD WIM Info-------------------- & dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.esd"
+if exist "%Fullpath%\sources\install.esd" echo. & echo.--------------------ESD WIM Info-------------------- & powershell -Command "$ProgressPreference='SilentlyContinue'; dism /Get-WimInfo /WimFile:'%Fullpath%\sources\install.esd' | %% { Write-Host $_ -ForegroundColor Cyan }"
 echo.
 echo.--------------------Install Wim Info---------------------
 if not exist "%Fullpath%\sources\Install.wim" goto :install_error
 powershell -Command "$ProgressPreference = 'SilentlyContinue'; dism /get-wiminfo /wimfile:'%Fullpath%\sources\install.wim'"
 if %ERRORLEVEL% equ 0 goto boot_inf
 :install_error
-powershell -Command "Write-Host 'Install wim is missed or modifyed' -ForegroundColor Red"
+powershell -Command "Write-Host 'install.wim is missing. Only Export ESD>WIM is afficiency.' -ForegroundColor Red"
 :boot_inf
 echo.
 echo.--------------------boot wim Info--------------------
@@ -184,7 +188,7 @@ if not exist "%Fullpath%\sources\boot.wim" goto :boot_error
 powershell -Command "$ProgressPreference = 'SilentlyContinue'; $out = dism /get-wiminfo /wimfile:'%Fullpath%\sources\boot.wim'; if ($LASTEXITCODE -ne 0 -or -not $out) { exit 1 }; $out | ForEach-Object { if ($_ -match 'Index\s*:\s*\d+') { Write-Host $_ -ForegroundColor Cyan } elseif ($_ -match 'Name\s*:') { Write-Host $_ -ForegroundColor Green } elseif ($_ -match 'Size\s*:') { Write-Host $_ -ForegroundColor Yellow } else { Write-Host $_ } }"
 if %ERRORLEVEL% equ 0 goto sel
 :boot_error
-powershell -Command "Write-Host 'boot wim is missed or modifyed' -ForegroundColor Red"
+powershell -Command "Write-Host 'boot wim is missing or modifyed' -ForegroundColor Red"
 
 :sel
 echo.------------------------------Menu------------------------------
