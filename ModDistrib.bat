@@ -1,5 +1,5 @@
 @echo off
-set "CURRENT_VER=0.9.0"
+set "CURRENT_VER=0.9.1"
 for /f "delims=" %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/jekovcar/ModDistrib/releases/latest').tag_name" 2^>nul') do (
     set "LATEST_RELEASE=%%i")
 if "%LATEST_RELEASE%"=="" set "LATEST_RELEASE=OFFLINE"
@@ -1305,6 +1305,34 @@ echo !LANG_CULTURE! = en-US
 echo.
 echo [2/5] Exporting ALL Secondary indexes into Main install.wim...
 
+:: Prompt user for install.wim backup choice using a reliable PowerShell GUI dialog box
+for /f "delims=" %%A in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $result = [System.Windows.Forms.MessageBox]::Show('Do you want to backup install.wim before modifying it and restore it after ISO creation?', 'Backup install.wim?', [System.Windows.Forms.MessageBoxButtons]::YesNo, [System.Windows.Forms.MessageBoxIcon]::Question); if ($result -eq 'Yes') { Write-Output '1' } else { Write-Output '0' }"') do set "BACKUP_WIM=%%A"
+
+:: Clean up any potential whitespace in the variable
+if defined BACKUP_WIM for /f "tokens=*" %%X in ("!BACKUP_WIM!") do set "BACKUP_WIM=%%X"
+
+if "!BACKUP_WIM!"=="1" (
+    echo.
+    echo [+] Backing up original install.wim...
+    if exist "!MAIN_DIR!\sources\install.wim" (
+        if not exist "!MAIN_DIR!\sources\install.wim.bak" (
+            copy /y "!MAIN_DIR!\sources\install.wim" "!MAIN_DIR!\sources\install.wim.bak" >nul
+        )
+    )
+) else (
+    echo.
+    echo [*] Skipping install.wim backup.
+)
+
+echo.
+echo [2/5] Exporting ALL Secondary indexes into Main install.wim...
+
+echo.
+echo [2/5] Exporting ALL Secondary indexes into Main install.wim...
+
+echo [2/5] Exporting ALL Secondary indexes into Main install.wim...
+:: (your existing index export code goes here)
+
 set "IMG_COUNT=0"
 for /f "tokens=2 delims=:" %%A in ('dism /English /Get-WimInfo /WimFile:"!SEC_DIR!\sources\install.wim" ^| findstr /I "Index"') do (
     set /a IMG_COUNT+=1
@@ -1489,6 +1517,14 @@ if exist "!MAIN_DIR!\boot\bcd.bak" (
 :: Restore UEFI BCD
 if exist "!MAIN_DIR!\efi\microsoft\boot\bcd.bak" (
     move /y "!MAIN_DIR!\efi\microsoft\boot\bcd.bak" "!MAIN_DIR!\efi\microsoft\boot\bcd" >nul
+)
+
+:: Restore original install.wim if backup was enabled
+if "!BACKUP_WIM!"=="1" (
+    if exist "!MAIN_DIR!\sources\install.wim.bak" (
+        echo Restoring original install.wim...
+        move /y "!MAIN_DIR!\sources\install.wim.bak" "!MAIN_DIR!\sources\install.wim" >nul
+    )
 )
 
 :: Clean up transient BCD log files created by BCDEdit operations
