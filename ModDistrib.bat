@@ -188,7 +188,8 @@ if not exist "%Fullpath%\sources\Install.wim" goto :install_error
 powershell -Command "$ProgressPreference = 'SilentlyContinue'; dism /get-wiminfo /wimfile:'%Fullpath%\sources\install.wim'"
 if %ERRORLEVEL% equ 0 goto boot_inf
 :install_error
-powershell -Command "Write-Host 'install.wim is missing. Export ESD>WIM is priority.' -ForegroundColor Red"
+powershell -Command "Write-Host 'install.wim not selected.' -ForegroundColor Red"
+powershell -Command "Write-Host 'Export ESD>WIM(S), Rename UpdPack(U) are available.' -ForegroundColor darkyellow"
 :boot_inf
 echo.
 echo.--------------------boot wim Info--------------------
@@ -664,8 +665,8 @@ echo ----------Add-Package to install.wim-------------
 set msu=
 :pdex
 set ind=
-set /p "ind=Enter index of install.wim: "
-if "%ind%"=="" echo Not Entered Value & pause & goto pdex
+set /p "ind=Enter index of install.wim,Empty to Rename UpdPack: "
+if "%ind%"=="" powershell write-host -fore darkyellow Not Entered Value, to Rename UpdPackage & pause & goto msu
 if %ind% equ +%ind% (
 set ind=%ind%
 ) else (
