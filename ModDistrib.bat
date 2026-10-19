@@ -33,8 +33,8 @@ title  Core_distribution_modifier v%CURRENT_VER% ^| GitHub: %LATEST_RELEASE% %wa
 @echo off
 :code
 powershell Write-Host "ModDistrib-extract '('w/o import')'/replace kernel32.dll',' WimVers.reg in Win10/11 ISO',' unpack" -Foregroundcolor yellow -BackgroundColor darkBlue
+:mount
 for /f "tokens=2,*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\WimMount\Mounted Images" /s /v "Mount Path" 2^>nul ^| find "Mount Path"') do @if not exist "%%b" set "mountDir=%%b" & call set "mountDir=%%mountDir:REG_SZ    =%%"
-
 if defined mountDir (
     Powershell Get-WindowsImage -Mounted
     powershell write-host -fore cyan "To Unmount ImagePath in Path" -NoNewline & echo  : %mountDir%
@@ -697,7 +697,7 @@ if "%msu%"=="" powershell write-host -fore darkyellow NOT Selected Packages
 if not "%msu%"=="" powershell write-host -fore yellow Selected Packages:%msu%
 
 @echo S(Save),D(Discard Updates),L(List Updates),P(Add/fix packages),R(Remove packs),C(Add capab),U(Remove capab),
-@echo G(Modify UI),T(Add unattend),I(Add selected packages to index),B(Add selected packages to boot.wim),Empty to Menu:
+@echo G(Modify UI),T(Add unattend),I(Add selected packages to index),B(Add selected packages to boot.wim),Empty to Back:
 SET /p choice=Pls, enter S/D/L/P/R/C/U/G/T/I/B:
 IF /i '%choice%'=='S' goto smsu
 IF /i '%choice%'=='D' goto dmsu
@@ -708,7 +708,7 @@ IF /i '%choice%'=='C' goto cap
 IF /i '%choice%'=='U' goto rcu
 IF /i '%choice%'=='G' goto mui
 IF /i '%choice%'=='T' goto uat
-IF /i '%choice%'=='' goto inf
+IF /i '%choice%'=='' goto mount
 IF /i '%choice%'=='I' SET "othi=1" & goto smsu
 IF /i '%choice%'=='B' SET "bothi=1" & SET "othi=1" & goto smsu
 goto cmsu
