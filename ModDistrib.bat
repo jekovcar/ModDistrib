@@ -666,7 +666,7 @@ set msu=
 :pdex
 set ind=
 set /p "ind=Enter index of install.wim,Empty to Rename UpdPack: "
-if "%ind%"=="" powershell write-host -fore darkyellow Not Entered Value, to Rename UpdPackage & pause & goto msu
+if "%ind%"=="" powershell write-host -fore darkyellow Not Entered Value',' to Rename UpdPackage & pause & goto msu
 if %ind% equ +%ind% (
 set ind=%ind%
 ) else (
@@ -697,7 +697,7 @@ if "%msu%"=="" powershell write-host -fore darkyellow NOT Selected Packages
 if not "%msu%"=="" powershell write-host -fore yellow Selected Packages:%msu%
 
 @echo S(Save),D(Discard Updates),L(List Updates),P(Add/fix packages),R(Remove packs),C(Add capab),U(Remove capab),
-@echo G(Modify UI), T(Add unattend), I(Add selected packages to index), B(Add selected packages to boot.wim):
+@echo G(Modify UI),T(Add unattend),I(Add selected packages to index),B(Add selected packages to boot.wim),Empty to Menu:
 SET /p choice=Pls, enter S/D/L/P/R/C/U/G/T/I/B:
 IF /i '%choice%'=='S' goto smsu
 IF /i '%choice%'=='D' goto dmsu
@@ -708,6 +708,7 @@ IF /i '%choice%'=='C' goto cap
 IF /i '%choice%'=='U' goto rcu
 IF /i '%choice%'=='G' goto mui
 IF /i '%choice%'=='T' goto uat
+IF /i '%choice%'=='' goto inf
 IF /i '%choice%'=='I' SET "othi=1" & goto smsu
 IF /i '%choice%'=='B' SET "bothi=1" & SET "othi=1" & goto smsu
 goto cmsu
@@ -789,8 +790,7 @@ pause
 goto cmsu
 :msu
 If "%othi%"=="1" if not "%msu%"=="" goto :omsu
-powershell write-host -fore yellow Pls, Choose UpdPackages folder for update
-pause
+powershell write-host -fore yellow Pls',' Choose UpdPackages folder for update
 set msu=
 set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
 for /f "usebackq delims=" %%I in (`powershell %psCommand%`) do set "msu=%%I"
