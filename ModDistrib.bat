@@ -666,7 +666,7 @@ set msu=
 :pdex
 set ind=
 set /p "ind=Enter index of install.wim,Empty to Rename UpdPack: "
-if "%ind%"=="" powershell write-host -fore darkyellow Not Entered Value',' to Rename UpdPackage & pause & goto msu
+if "%ind%"=="" goto msu
 if %ind% equ +%ind% (
 set ind=%ind%
 ) else (
@@ -789,7 +789,7 @@ Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 pause
 goto cmsu
 :msu
-If "%othi%"=="1" if not "%msu%"=="" goto :omsu
+If "%othi%"=="1" if not "%msu%"=="" goto omsu
 powershell write-host -fore yellow Pls',' Choose UpdPackages folder for update
 set msu=
 set "psCommand="(new-object -com shell.application).browseforfolder(0,'Select File',0,17).self.path""
@@ -864,6 +864,7 @@ IF /i '%choice%'=='' goto iwm
 goto iwcm
 :iwm
 :say_no
+if "%Fullpath%"=="" goto inf
 :::::::::end_Y/n:::::::::
 echo Process started, Pls wait...
 setlocal enabledelayedexpansion
@@ -977,7 +978,7 @@ Dism /Get-Packages /Image:"%out%AIKMount" /Format:Table
 pause
 goto cmsur
 :msur
-If "%othi%"=="1" if not "%msu%"=="" goto :omsur
+If "%othi%"=="1" if not "%msu%"=="" goto omsur
 powershell write-host -fore yellow Pls, Choose UpdPackages folder for update
 pause
 set msu=
