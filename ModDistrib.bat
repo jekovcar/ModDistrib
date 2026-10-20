@@ -664,9 +664,10 @@ goto inf
 echo ----------Add-Package to install.wim-------------
 set msu=
 :pdex
+if "%Fullpath%"=="" goto msu
 set ind=
-set /p "ind=Enter index of install.wim,Empty to Rename UpdPack: "
-if "%ind%"=="" goto msu
+set /p "ind=Enter index of install.wim, Empy to Back: "
+if "%ind%"=="" goto echo Not Entered Value & goto pdex
 if %ind% equ +%ind% (
 set ind=%ind%
 ) else (
