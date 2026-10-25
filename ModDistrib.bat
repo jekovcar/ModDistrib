@@ -1,5 +1,5 @@
 @echo off
-set "CURRENT_VER=0.9.1"
+set "CURRENT_VER=0.9.2"
 for /f "delims=" %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/jekovcar/ModDistrib/releases/latest').tag_name" 2^>nul') do (
     set "LATEST_RELEASE=%%i")
 if "%LATEST_RELEASE%"=="" set "LATEST_RELEASE=OFFLINE"
@@ -184,7 +184,7 @@ powershell write-host -fore yellow WIM to ESD  of Index:%sein% was converted ! &
 if exist "%Fullpath%\sources\install.esd" echo. & echo.--------------------ESD WIM Info-------------------- & powershell -Command "$ProgressPreference='SilentlyContinue'; dism /Get-WimInfo /WimFile:'%Fullpath%\sources\install.esd' | %% { Write-Host $_ -ForegroundColor Cyan }"
 echo.
 echo.--------------------Install Wim Info---------------------
-if not exist "%Fullpath%\sources\Install.wim" goto :install_error
+if not exist "%Fullpath%\sources\Install.wim" goto install_error
 powershell -Command "$ProgressPreference = 'SilentlyContinue'; dism /get-wiminfo /wimfile:'%Fullpath%\sources\install.wim'"
 if %ERRORLEVEL% equ 0 goto boot_inf
 :install_error
@@ -193,7 +193,7 @@ powershell -Command "Write-Host 'Export ESD>WIM(S), Rename UpdPack(U) are availa
 :boot_inf
 echo.
 echo.--------------------boot wim Info--------------------
-if not exist "%Fullpath%\sources\boot.wim" goto :boot_error
+if not exist "%Fullpath%\sources\boot.wim" goto boot_error
 powershell -Command "$ProgressPreference = 'SilentlyContinue'; $out = dism /get-wiminfo /wimfile:'%Fullpath%\sources\boot.wim'; if ($LASTEXITCODE -ne 0 -or -not $out) { exit 1 }; $out | ForEach-Object { if ($_ -match 'Index\s*:\s*\d+') { Write-Host $_ -ForegroundColor Cyan } elseif ($_ -match 'Name\s*:') { Write-Host $_ -ForegroundColor Green } elseif ($_ -match 'Size\s*:') { Write-Host $_ -ForegroundColor Yellow } else { Write-Host $_ } }"
 if %ERRORLEVEL% equ 0 goto sel
 :boot_error
@@ -810,9 +810,9 @@ powershell write-host -fore yellow Choiced UpdPakage folder %msu%',' Pls wait...
 set "ans="
 set /p "ans=Do you want fix renaming UpdPakage files? [N/y] (Default is N): "
 if "%ans%"=="" set "ans=N"
-if /i "%ans%"=="Y" goto :say_yes
-if /i "%ans%"=="N" goto :say_no
-goto :prompt
+if /i "%ans%"=="Y" goto say_yes
+if /i "%ans%"=="N" goto say_no
+goto prompt
 :say_yes
 rem endlocal
 :::::::::::::::::::::::::::::::Rename cab::::::::::::::::::::::
@@ -937,7 +937,7 @@ if %errorlevel% equ 0 (
 
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\boot.wim" /Index:%ind%
 powershell write-host -fore cyan boot.wim index':'%ind% was mounted in %out%AIKMount '!'
-If "%othi%"=="1" goto :msur
+If "%othi%"=="1" goto msur
 :cmsur
 echo.
 SET "othi=0"
@@ -1318,8 +1318,8 @@ if "!BACKUP_WIM!"=="1" (
     echo.
     echo [+] Backing up original install.wim...
     if exist "!MAIN_DIR!\sources\install.wim" (
-        if not exist "!MAIN_DIR!\sources\install.wim.bak" (
-            copy /y "!MAIN_DIR!\sources\install.wim" "!MAIN_DIR!\sources\install.wim.bak" >nul
+        if not exist "!SEC_DIR!\install.wim.bak" (
+            copy /y "!MAIN_DIR!\sources\install.wim" "!SEC_DIR!\install.wim.bak" >nul
         )
     )
 ) else (
@@ -1495,6 +1495,8 @@ if not exist "!OSCDIMG_EXE!" (
 )
 
 :: Run ISO creation
+
+if exist "!OUTPUT_ISO!" set "OUTPUT_ISO=!out!Win_!BUILD_MAIN!_Dual_!LANG!_New.iso"
 "!OSCDIMG_EXE!" -bootdata:2#p0,e,b"!MAIN_DIR!\boot\etfsboot.com"#pEF,e,b"!MAIN_DIR!\efi\microsoft\boot\efisys.bin" -o -h -m -u2 -udfver102 "!MAIN_DIR!" "!OUTPUT_ISO!"
 
 if errorlevel 1 (
@@ -1524,9 +1526,9 @@ if exist "!MAIN_DIR!\efi\microsoft\boot\bcd.bak" (
 
 :: Restore original install.wim if backup was enabled
 if "!BACKUP_WIM!"=="1" (
-    if exist "!MAIN_DIR!\sources\install.wim.bak" (
+    if exist "!SEC_DIR!\install.wim.bak" (
         echo Restoring original install.wim...
-        move /y "!MAIN_DIR!\sources\install.wim.bak" "!MAIN_DIR!\sources\install.wim" >nul
+        move /y "!SEC_DIR!\install.wim.bak" "!MAIN_DIR!\sources\install.wim" >nul
     )
 )
 
