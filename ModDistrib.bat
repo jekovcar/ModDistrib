@@ -1,5 +1,5 @@
 @echo off
-set "CURRENT_VER=0.9.2"
+set "CURRENT_VER=0.9.3"
 for /f "delims=" %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/jekovcar/ModDistrib/releases/latest').tag_name" 2^>nul') do (
     set "LATEST_RELEASE=%%i")
 if "%LATEST_RELEASE%"=="" set "LATEST_RELEASE=OFFLINE"
@@ -202,10 +202,10 @@ powershell -Command "Write-Host 'boot wim is missing or modifyed' -ForegroundCol
 :sel
 echo.------------------------------Menu------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
-@echo Mod Distr(M),Exp/Imp/Ren Distr(E),Remove index Distr(R),Export ESD^>WIM(S),BypassTPM(P),BypassNRO(F)
+@echo Mod Distr(M),Exp/Imp/Ren Distr(E),Remove index Distr(R),Export ESD^>WIM(S),BypassTPM(P),BypassNRO(F),Autounatted(A)
 @echo Convert Wim^>ESD(C),Detinfo Distr(I),Make Iso(N),Upd/Mod Install(U),Upd/Mod Boot(W),Dual-Boot Iso(L),Back(B)?
 SET choice=
-SET /p choice=Pls, enter M/E/R/S/P/F/C/I/N/U/W/L/B: 
+SET /p choice=Pls, enter M/E/R/S/P/F/A/C/I/N/U/W/L/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
 IF /i '%choice%'=='M' goto ext
 IF /i '%choice%'=='E' goto por
@@ -213,6 +213,7 @@ IF /i '%choice%'=='R' goto del
 IF /i '%choice%'=='S' goto esd
 IF /i '%choice%'=='P' goto bpres
 IF /i '%choice%'=='F' goto bpnro
+IF /i '%choice%'=='A' goto anat
 IF /i '%choice%'=='C' goto con
 IF /i '%choice%'=='I' goto det
 IF /i '%choice%'=='N' goto iso
@@ -267,6 +268,32 @@ if %errorlevel% equ 0 (
 
 )
 goto sel
+
+:anat
+powershell -NoProfile -Command "Write-Host 'Choose an autounattend XML to apply:' -ForegroundColor DarkYellow"
+set "axml="
+for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'autounattend XML (*.xml)|*.xml|All Files (*.*)|*.*'; if($f.ShowDialog() -eq 'OK') { $f.FileName }"') do set "axml=%%i"
+
+IF NOT DEFINED axml (
+    echo [!] No autounattend XML chosen.
+    goto sel
+) ELSE (
+    :: Run the inline validation script. Returns Exit Code 0 on success, and Exit Code 1 on error.
+    powershell -ExecutionPolicy Bypass -Command "$ErrorActionPreference = 'Stop'; try { [xml]$x = Get-Content '%axml%'; $passes = $x.SelectNodes('//*[local-name()=''pass'' and @name=''offlineServicing'']'); if ($passes) { Write-Host 'SUCCESS: XML is valid and contains offlineServicing pass.' -ForegroundColor Green; exit 0 } else { Write-Warning 'Apply-autounattend may fail: Missing offlineServicing pass.'; exit 1 } } catch { Write-Warning ('XML Syntax Error: ' + $_.Exception.Message); exit 1 }"
+
+    :: Check error level from the PowerShell validation command
+    if errorlevel 1 (
+        @powershell -Command "Write-Host 'Add autounattend.xml skipped due to XML validation failure.' -ForegroundColor Red"
+        pause
+        goto anat
+    ) else (
+        pause
+        copy /y "%axml%" "%Fullpath%\autounattend.xml"
+        @powershell -Command "Write-Host 'Add autounattend.xml was successful after XML validation.' -ForegroundColor Yellow"
+    )
+)
+goto sel
+
 :del
 echo ----------Remove image of index-------------
 set rein=
