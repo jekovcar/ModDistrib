@@ -29,7 +29,8 @@
 <br>-----_WinPE-Setup-Client_xx-xx.cab_
 <br>21. Add an option Rename image of wim(install/boot.wim)
 <br>22. Add an option apply unattend.xml to image(install.wim) and validate xml structure error
-<br>23. Added the ability to create a dual-boot ISO image based on two distributions(MSDN/upd) of the same version and in two languages.
+<br>23. AAdd an option apply autounattend.xml to Distributive and validate xml structure error
+<br>24. Added the ability to create a dual-boot ISO image based on two distributions(MSDN/upd) of the same version and in two languages.
 
 # Reference
 <p2>Function build ISO file [MSDN libr](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options?view=windows-11)
