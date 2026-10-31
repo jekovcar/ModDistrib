@@ -56,7 +56,7 @@ for /f "delims=" %%i in ('powershell -NoProfile -Command "Add-Type -AssemblyName
 if "%isoPath%"=="" powershell write-host -fore darkyellow NOT Selected ISO & goto def
 goto isp
 :def
-echo ---------------Path to distrib-----------------------
+echo --------------------Path to distrib----------------------
 set Fullpath=
 set /p Fullpath="Enter Full path distrib(bef.\sources) : "
 if "%Fullpath%"=="" powershell write-host -fore darkyellow Path is Empty & goto inf
@@ -64,7 +64,7 @@ for /F %%I in ('powershell -Command "(Test-Path -Path '%Fullpath%')"') do set TP
 If %TPath%==False powershell write-host -fore darkyellow 'Path is Invalid"," Pls to correct "&" enter again.' & powershell write-host -fore darkgray 'Prefer Short Paths without Spaces or invalid characters.' & goto def
 goto fold
 :isp
-echo ---------------ISO Init-----------------------
+echo --------------------ISO Init-----------------------------
 
 echo Choosed "%isoPath%"
 set isoDrive=
@@ -97,7 +97,7 @@ robocopy %newLetter%\ "%out%%isoName%" /E /A-:SH > nul
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /v "DisableAutoplay" /t REG_DWORD /d 0 /f > nul
 powershell Dismount-DiskImage -ImagePath '%isoPath%' > nul
 :fold
-echo.--------------------Folders init--------------------------
+echo.--------------------Folders init-------------------------
 if not exist "%Fullpath%\sources\install.*" powershell write-host -fore darkyellow  Entered Dir not contain 'install.wim' Pls, choose again & goto def
 powershell write-host -fore yellow InPath : %Fullpath%
 attrib -r "%Fullpath%\*.*" /s /d
@@ -130,7 +130,7 @@ powershell write-host -fore yellow Choosed Wim: %esd%
 for %%i in ("%esd%\..\..") do set "Fullpath=%%~fi"
 :esdex
 dism /get-wiminfo /wimfile:"%esd%"
-echo ----------Export ESD index to WIM image-------------
+echo ---------------Export ESD index to WIM image-------------
 If exist "%Fullpath%\sources\install.wim" powershell write-host -fore darkyellow 'Destination wim image exists, esd indexes will be imported. Empty to Menu.'
 set rein=
 echo Enter ESD indexes separated by spaces,like(5, 1, 2) : 
@@ -155,7 +155,7 @@ taskkill /IM powershell.exe /F > nul
 powershell write-host -fore cyan PS window '''keep AWAKE''' was closed.
 powershell write-host -fore yellow ESD to WIM of Index:%sein% was Exported ! & goto inf
 :con
-echo ----------Convert Wim index to ESD image-------------
+echo --------------Convert Wim index to ESD image-------------
 set rein=
 echo Enter WIM indexes separated by spaces,like(5, 1, 2) : 
 set /p rein=
@@ -189,21 +189,22 @@ powershell -Command "$ProgressPreference = 'SilentlyContinue'; dism /get-wiminfo
 if %ERRORLEVEL% equ 0 goto boot_inf
 :install_error
 powershell -Command "Write-Host 'install.wim not selected.' -ForegroundColor Red"
-powershell -Command "Write-Host 'Export ESD>WIM(S), Rename UpdPack(U) are available.' -ForegroundColor darkyellow"
+powershell -Command "Write-Host 'Export ESD>WIM(S), Rename UpdPack(U),Add autounattend(A) are available.' -ForegroundColor darkyellow"
 :boot_inf
 echo.
-echo.--------------------boot wim Info--------------------
+echo.--------------------boot wim Info------------------------
 if not exist "%Fullpath%\sources\boot.wim" goto boot_error
 powershell -Command "$ProgressPreference = 'SilentlyContinue'; $out = dism /get-wiminfo /wimfile:'%Fullpath%\sources\boot.wim'; if ($LASTEXITCODE -ne 0 -or -not $out) { exit 1 }; $out | ForEach-Object { if ($_ -match 'Index\s*:\s*\d+') { Write-Host $_ -ForegroundColor Cyan } elseif ($_ -match 'Name\s*:') { Write-Host $_ -ForegroundColor Green } elseif ($_ -match 'Size\s*:') { Write-Host $_ -ForegroundColor Yellow } else { Write-Host $_ } }"
 if %ERRORLEVEL% equ 0 goto sel
 :boot_error
 powershell -Command "Write-Host 'boot wim is missing or modifyed' -ForegroundColor Red"
-
+echo.
 :sel
-echo.------------------------------Menu------------------------------
+echo.----------------------------------Menu------------------------------------
 powershell write-host -fore darkgray 'Mount Distr(M) for Extract "&" Replace components'
-@echo Mod Distr(M),Exp/Imp/Ren Distr(E),Remove index Distr(R),Export ESD^>WIM(S),BypassTPM(P),BypassNRO(F),Autounatted(A)
-@echo Convert Wim^>ESD(C),Detinfo Distr(I),Make Iso(N),Upd/Mod Install(U),Upd/Mod Boot(W),Dual-Boot Iso(L),Back(B)?
+@echo Mod Distr(M), Exp/Imp/Ren Distr(E), Remove index Distr(R), Export ESD^>WIM(S)
+@echo BypassTPM(P),BypassNRO(F),Add Autounattend(A),Convert Wim^>ESD(C),Info Distr(I)
+@echo Make Iso(N), Upd/Mod Install(U), Upd/Mod Boot(W), Dual-Boot Iso(L), Back(B)?
 SET choice=
 SET /p choice=Pls, enter M/E/R/S/P/F/A/C/I/N/U/W/L/B: 
 IF NOT '%choice%'=='' SET choice=%choice:~0,1%
@@ -287,6 +288,7 @@ IF NOT DEFINED axml (
         pause
         goto anat
     ) else (
+    if "%Fullpath%"=="" goto sel
         pause
         copy /y "%axml%" "%Fullpath%\autounattend.xml"
         @powershell -Command "Write-Host 'Add autounattend.xml was successful after XML validation.' -ForegroundColor Yellow"
