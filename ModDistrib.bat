@@ -1,5 +1,5 @@
 @echo off
-set "CURRENT_VER=0.9.3"
+set "CURRENT_VER=0.9.4"
 for /f "delims=" %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/jekovcar/ModDistrib/releases/latest').tag_name" 2^>nul') do (
     set "LATEST_RELEASE=%%i")
 if "%LATEST_RELEASE%"=="" set "LATEST_RELEASE=OFFLINE"
@@ -189,7 +189,7 @@ powershell -Command "$ProgressPreference = 'SilentlyContinue'; dism /get-wiminfo
 if %ERRORLEVEL% equ 0 goto boot_inf
 :install_error
 powershell -Command "Write-Host 'install.wim not selected.' -ForegroundColor Red"
-powershell -Command "Write-Host 'Export ESD>WIM(S), Rename UpdPack(U),Add autounattend(A) are available.' -ForegroundColor darkyellow"
+powershell -Command "Write-Host 'Export ESD>WIM(S), Rename UpdPack(U), Validate autounattend(A) are available.' -ForegroundColor darkyellow"
 :boot_inf
 echo.
 echo.--------------------boot wim Info------------------------
@@ -294,7 +294,7 @@ IF NOT DEFINED axml (
         @powershell -Command "Write-Host 'Add autounattend.xml was successful after XML validation.' -ForegroundColor Yellow"
     )
 )
-goto sel
+goto pars
 
 :del
 echo ----------Remove image of index-------------
@@ -580,6 +580,24 @@ Dism /Export-Image /SourceImageFile:"%wnm%" /SourceIndex:%ind% /DestinationImage
 Dism /Export-Image /SourceImageFile:"%out%new.wim" /SourceIndex:1 /DestinationImageFile:"%Fullpath%\sources\install.wim" /DestinationName:"%desc%"
 dism /get-wiminfo /wimfile:"%Fullpath%\sources\install.wim"
 del /f /q "%out%new.wim"
+echo.
+if not exist "%Fullpath%\autounattend.xml" (
+    goto iex
+)
+:pars
+echo Processing autounattend.xml...
+:: Use PowerShell to cleanly remove the InstallFrom node using XML parsing
+powershell -NoProfile -Command ^
+    "[xml]$xml = Get-Content -Path '%Fullpath%\autounattend.xml' -Encoding UTF8; " ^
+    "$node = $xml.unattend.settings.component.ImageInstall.OSImage.InstallFrom; " ^
+    "if ($node) { " ^
+    "    [void]$node.ParentNode.RemoveChild($node); " ^
+    "    $xml.Save('%Fullpath%\autounattend.xml'); " ^
+    "    Write-Host '[SUCCESS] Successfully parsed autounattend.xml.' -ForegroundColor cyan; " ^
+    "} else { " ^
+    "    Write-Host '[INFO] Autounattend.xml already parsed.' -ForegroundColor darkgray; " ^
+    "}"
+IF DEFINED axml ( set "axml=" & goto sel )
 goto iex
 
 :ext
