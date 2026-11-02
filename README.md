@@ -2,7 +2,7 @@
 <br>The following options are available for Windows 10.11 distributions:
 <br>1. Mount an ISO image or folder to extract (without selecting) or replace core files(kernel32.dll,kernel32.reg).
 <br>-----_Based on an idea by **Darkhorse1870**(forum.ru-board)_
-<br>2. Export/import the install WIM file index
+<br>2. Export/import the install WIM file index with parsing 'autounattend.xml'
 <br>3. Export/import the boot WIM file index
 <br>4. Batch Delete the install WIM file index
 <br>5. Batch Export ESD to WIM
