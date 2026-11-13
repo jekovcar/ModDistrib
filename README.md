@@ -13,7 +13,7 @@
 <br>10.Import a boot WIM file into a distribution
 <br>11. Detailed information about the imported install/boot WIM file index
 <br>12. Delete the distribution's boot WIM file index
-<br>13. Make Boot Iso from folder distribution
+<br>13. Create a bootable ISO image from a distribution folder, having first parsed the autounattend.xml file.
 <br>14. Bypass install hardware restrictions (TPM)
 <br>15. Bypass install automatic updates, enable local account & Windows 11 Internet Requirement (NRO)
 <br>16. Add/Remove package updates(not SPaks) to Install.wim image (ModDistrib script autorename them possible for add capability)
