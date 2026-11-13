@@ -1,5 +1,5 @@
 @echo off
-set "CURRENT_VER=0.9.4"
+set "CURRENT_VER=0.9.5"
 for /f "delims=" %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/jekovcar/ModDistrib/releases/latest').tag_name" 2^>nul') do (
     set "LATEST_RELEASE=%%i")
 if "%LATEST_RELEASE%"=="" set "LATEST_RELEASE=OFFLINE"
@@ -226,6 +226,8 @@ goto sel
 
 :iso
 echo.--------------------Make Iso Distr------------------------------
+if exist "%Fullpath%\autounattend.xml" ( set "iso=1" & goto pars )
+:isount
 if not exist "%~dp0Oscdimg.exe" (
 powershell write-host -fore darkyellow Missed Oscdimg. To download & pause
 powershell -command "Start-BitsTransfer -Source 'https://msdl.microsoft.com/download/symbols/oscdimg.exe/688CABB065000/oscdimg.exe' -Destination '%~dp0'"
@@ -285,11 +287,9 @@ IF NOT DEFINED axml (
     :: Check error level from the PowerShell validation command
     if errorlevel 1 (
         @powershell -Command "Write-Host 'Add autounattend.xml skipped due to XML validation failure.' -ForegroundColor Red"
-        pause
-        goto anat
+        goto sel
     ) else (
     if "%Fullpath%"=="" goto sel
-        pause
         copy /y "%axml%" "%Fullpath%\autounattend.xml"
         @powershell -Command "Write-Host 'Add autounattend.xml was successful after XML validation.' -ForegroundColor Yellow"
     )
@@ -597,6 +597,7 @@ powershell -NoProfile -Command ^
     "} else { " ^
     "    Write-Host '[INFO] Autounattend.xml already parsed.' -ForegroundColor darkgray; " ^
     "}"
+IF "%iso%"=="1" ( set "iso=" & goto isount )
 IF DEFINED axml ( set "axml=" & goto sel )
 goto iex
 
