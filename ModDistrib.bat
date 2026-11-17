@@ -598,6 +598,7 @@ powershell -NoProfile -Command ^
     "    Write-Host '[INFO] Autounattend.xml already parsed.' -ForegroundColor darkgray; " ^
     "}"
 IF "%iso%"=="1" ( set "iso=" & goto isount )
+IF "%duat%"=="1" ( set "duat=" & goto isod )
 IF DEFINED axml ( set "axml=" & goto sel )
 goto iex
 
@@ -1526,6 +1527,8 @@ del /f /q /a "!MAIN_DIR!\efi\microsoft\boot\bcd.LOG*" >nul 2>&1
 echo.
 echo [5/5] Packaging files into a dual bootable ISO image...
 
+if exist "%Fullpath%\autounattend.xml" ( set "duat=1" & goto pars )
+:isod
 set "OSCDIMG_EXE=%~dp0oscdimg.exe"
 if not exist "!OSCDIMG_EXE!" (
     if exist "%ProgramFiles(x86)%\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\Oscdimg\oscdimg.exe" (
